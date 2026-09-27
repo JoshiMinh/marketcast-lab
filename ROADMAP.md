@@ -1,4 +1,4 @@
-# Multi-Market Time Series Forecasting Lab - Roadmap
+# MarketCast Lab - Course Implementation Roadmap
 
 ## 1. Project decision
 
@@ -55,6 +55,65 @@ The finished project must demonstrate all major subject outcomes.
 | Communication | Provide a clear dashboard, reproducible notebook/report, experiment tables, conclusions, and documented limitations. |
 
 Because evaluation, comparison, explanation, and model selection are central grading concerns, dashboard polish must not take priority over methodological correctness.
+
+### Assessment priorities
+
+The course rubric assigns the assessed work to three major outcomes:
+
+| Outcome | Weight | Evidence MarketCast Lab must provide |
+| --- | ---: | --- |
+| Analyze time-series data | 30% | Data collection, cleaning, per-asset preprocessing, trend/seasonality/stationarity analysis, and clear visualization. |
+| Build forecasting models | 30% | Correct implementations of statistical models and RNN/LSTM/GRU, documented training, and justified optimization. |
+| Present and evaluate results | 40% | Forecasts, fold-aware metrics, residual analysis, model comparison, limitations, interpretation, and a justified model recommendation. |
+
+The implementation must therefore reserve substantial project time for experiments, interpretation, reporting, and presentation. Merely supporting many tickers or producing an attractive UI does not satisfy the most heavily weighted outcome.
+
+### Required course evidence checklist
+
+- [ ] Define trend, seasonality, cycles, noise, stationarity, target, horizon, and forecast strategy in the report.
+- [ ] Audit timestamps, duplicates, missing data, sampling frequency, and market calendar for every final asset.
+- [ ] Demonstrate smoothing, scaling, log or Box-Cox transformation, and differencing; retain only transformations justified by diagnostics.
+- [ ] Present time plots, returns, rolling statistics, decomposition, ACF/PACF, and stationarity tests.
+- [ ] Include naive and seasonal-naive baselines where appropriate.
+- [ ] Fit and analyze exponential smoothing, ARIMA, and SARIMA candidates.
+- [ ] Build lag/rolling features and evaluate linear and non-linear ML models.
+- [ ] Implement RNN, LSTM, and GRU in PyTorch and explain their sequence architecture.
+- [ ] Use `TimeSeriesSplit` or explicit walk-forward folds with all preprocessing fitted inside each training fold.
+- [ ] Compare common folds and horizons using error metrics, stability, runtime, residuals, and uncertainty where available.
+- [ ] Explain model strengths, weaknesses, failure cases, and differences between asset classes.
+- [ ] Recommend a model by asset and horizon based on evidence rather than a single global winner.
+- [ ] Produce a reproducible report, presentation, demonstration, and documented execution workflow.
+
+### Final academic deliverables
+
+1. Source repository with reproducible environment and configuration files.
+2. Data-source register, data dictionary, and generated quality reports.
+3. Exploratory analysis showing preprocessing and time-series characteristics.
+4. Statistical-model experiment and Box-Jenkins diagnostics.
+5. Lag-based machine-learning experiment with temporal validation.
+6. PyTorch RNN/LSTM/GRU experiment with learning curves and tuning evidence.
+7. Cross-market, cross-horizon comparison tables and figures.
+8. Streamlit dashboard that reproduces the primary analysis from saved artifacts.
+9. Scientific report containing methodology, results, interpretation, limitations, and conclusions.
+10. Presentation/demo materials with a short reproducible scenario.
+
+### Final experiment matrix
+
+At minimum, the final results should cover the following matrix. If compute or time is limited, reduce tuning breadth rather than omitting entire required model families.
+
+| Dimension | Minimum coverage |
+| --- | --- |
+| Assets | One crypto, one equity, one forex pair, and one oil series |
+| Frequency | Daily |
+| Horizons | 1, 5, and 20 steps, adjusted only with written justification |
+| Baselines | Last value, drift, and seasonal naive when a valid season exists |
+| Statistical | Exponential smoothing/Holt-Winters, ARIMA, and SARIMA when justified |
+| Machine learning | Ridge or Lasso, Random Forest, and XGBoost or LightGBM |
+| Deep learning | PyTorch RNN, LSTM, and GRU |
+| Validation | At least three chronological walk-forward folds plus one locked final test period |
+| Core metrics | MAE, RMSE, sMAPE, MASE, and runtime; AIC/BIC for applicable models |
+| Diagnostics | Residual plot, residual ACF, Ljung-Box test, and interval coverage where available |
+| Reporting | Fold mean and variability, final holdout result, limitations, and selection rationale |
 
 ## 4. Scope
 
