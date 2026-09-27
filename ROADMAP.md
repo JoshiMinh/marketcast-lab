@@ -1,360 +1,51 @@
-# MarketCast Lab - Course Implementation Roadmap
+# MarketCast Lab — Four-Phase Implementation Roadmap
 
-## 1. Project decision
+## Mission
 
-This repository should be **converted and upgraded**, not discarded. The current crypto application already provides a useful Streamlit interface, command-line entry point, plotting code, and initial ARIMA/Prophet/LSTM/GRU implementations. Those parts should become the starting point for a broader, academically rigorous time-series forecasting project.
+Convert the existing cryptocurrency forecasting prototype into a reproducible academic platform that compares time-series forecasting methods across cryptocurrency, equities, foreign exchange, and crude oil.
 
-The former name, `crypto-price-forecast-ml`, was too narrow for the intended scope.
+The final project must answer:
 
-### Recommended name
+> How do statistical, machine-learning, and deep-learning forecasting methods compare across financial asset classes with different calendars, volatility, trend, and seasonality?
 
-**Repository:** `marketcast-lab`  
-**Application:** **MarketCast Lab**  
-**Academic title:** **MarketCast Lab: A Unified Framework for Time Series Forecasting Across Financial Markets**
+This is an analysis and comparison system, not a trading or financial-advice system.
 
-Alternative repository names:
+## How to use this roadmap
 
-- `financial-time-series-lab`
-- `cross-market-forecasting`
-- `unified-time-series-forecasting`
+Complete the phases in order. Each phase below is a self-contained prompt for an AI coding agent. Start a fresh agent session for each phase and give it the entire prompt. Do not begin the next phase until the current phase's acceptance checks pass.
 
-`marketcast-lab` communicates a cross-market forecasting laboratory without claiming that one universal model can reliably predict every market.
+Agents must inspect the current repository before editing, preserve useful legacy behavior, avoid unrelated changes, and leave the repository runnable. If a required data source cannot legally be committed, add a retrieval adapter, manifest, and documentation instead.
 
-## 2. Project vision
+## Progress
 
-Build a reproducible platform that imports time series from several financial markets, analyzes their statistical characteristics, trains multiple forecasting families, evaluates them with leakage-safe backtesting, and explains which approaches work best for each market and forecast horizon.
+- [x] Phase 1 — Establish a trustworthy single-asset foundation.
+- [x] Phase 2 — Build evaluation and all required model families.
+- [ ] Phase 3 — Generalize to four markets and produce defensible results.
+- [ ] Phase 4 — Deliver the dashboard, report, and reproducibility package.
 
-The project should support representative assets from:
+Phase 1 and Phase 2 were verified with the automated test suite and reproducible BTC experiment configurations. Generated run directories remain local and are excluded from version control; configurations, code, tests, and reporting logic are committed.
 
-- Cryptocurrency
-- Stocks or stock indices
-- Foreign exchange
-- Commodities, especially crude oil
+## Fixed project contract
 
-The central research question is:
+These requirements apply to every phase:
 
-> How do statistical, machine-learning, and deep-learning forecasting methods compare across financial asset classes with different calendars, volatility, trend, and seasonality characteristics?
+- Use daily data initially for one representative asset per class: BTC/USD, SPY or AAPL, EUR/USD, and a documented crude-oil series.
+- Keep observations separated by `asset_id`; never calculate features across asset boundaries.
+- Preserve chronological order. Fit scalers, transformations, feature selectors, and models only on the applicable training fold.
+- Reserve a locked final test period. Never use it for feature selection, tuning, or model selection.
+- Evaluate horizons 1, 5, and 20 with at least three comparable walk-forward folds.
+- Include last-value, drift, and seasonal-naive baselines where meaningful.
+- Report MAE, RMSE, sMAPE, MASE, and runtime. Report AIC/BIC for applicable statistical models and residual diagnostics where possible.
+- Implement RNN, LSTM, and GRU in PyTorch, not TensorFlow.
+- Make experiments deterministic where libraries permit and record seeds, dependencies, data range, fold boundaries, parameters, forecast strategy, and code revision.
+- Keep notebooks and Streamlit as consumers of shared `src/` code. They must not contain separate training pipelines.
+- Prefer a smaller valid experiment matrix over broad but methodologically weak tuning.
 
-This is a comparison and analysis system, not a trading recommendation system.
+The canonical long-format data fields are:
 
-## 3. Course alignment
+`asset_id`, `symbol`, `asset_class`, `timestamp`, `frequency`, `open`, `high`, `low`, `close`, `adjusted_close`, `volume`, `currency`, `provider`, and `retrieved_at`.
 
-The finished project must demonstrate all major subject outcomes.
-
-| Course area | Required evidence in the project |
-| --- | --- |
-| Time-series fundamentals | Explain trend, seasonality, cycles, noise, stationarity, and forecast horizons. |
-| Data preparation | Detect missing timestamps and values; handle duplicates and outliers; apply scaling, log/Box-Cox transforms, smoothing, and differencing where justified. |
-| Exploratory analysis | Plot series and returns; perform decomposition; inspect rolling statistics, ACF, and PACF. |
-| Statistical forecasting | Implement naive baselines, exponential smoothing, AR/ARIMA, and SARIMA where seasonality exists. |
-| Machine learning | Generate lag and rolling-window features; compare Ridge/Lasso, Random Forest, and a boosting model. |
-| Deep learning | Implement RNN, LSTM, and GRU in PyTorch, including multi-step forecasting. |
-| Correct evaluation | Use chronological splits and walk-forward or `TimeSeriesSplit` validation without future leakage. |
-| Metrics and diagnostics | Report MAE, MSE, RMSE, MAPE/sMAPE, MASE, AIC/BIC where applicable, residual diagnostics, and runtime. |
-| Model comparison | Compare models by asset, asset class, horizon, and fold; explain strengths and limitations. |
-| Communication | Provide a clear dashboard, reproducible notebook/report, experiment tables, conclusions, and documented limitations. |
-
-Because evaluation, comparison, explanation, and model selection are central grading concerns, dashboard polish must not take priority over methodological correctness.
-
-### Assessment priorities
-
-The course rubric assigns the assessed work to three major outcomes:
-
-| Outcome | Weight | Evidence MarketCast Lab must provide |
-| --- | ---: | --- |
-| Analyze time-series data | 30% | Data collection, cleaning, per-asset preprocessing, trend/seasonality/stationarity analysis, and clear visualization. |
-| Build forecasting models | 30% | Correct implementations of statistical models and RNN/LSTM/GRU, documented training, and justified optimization. |
-| Present and evaluate results | 40% | Forecasts, fold-aware metrics, residual analysis, model comparison, limitations, interpretation, and a justified model recommendation. |
-
-The implementation must therefore reserve substantial project time for experiments, interpretation, reporting, and presentation. Merely supporting many tickers or producing an attractive UI does not satisfy the most heavily weighted outcome.
-
-### Required course evidence checklist
-
-- [ ] Define trend, seasonality, cycles, noise, stationarity, target, horizon, and forecast strategy in the report.
-- [ ] Audit timestamps, duplicates, missing data, sampling frequency, and market calendar for every final asset.
-- [ ] Demonstrate smoothing, scaling, log or Box-Cox transformation, and differencing; retain only transformations justified by diagnostics.
-- [ ] Present time plots, returns, rolling statistics, decomposition, ACF/PACF, and stationarity tests.
-- [ ] Include naive and seasonal-naive baselines where appropriate.
-- [ ] Fit and analyze exponential smoothing, ARIMA, and SARIMA candidates.
-- [ ] Build lag/rolling features and evaluate linear and non-linear ML models.
-- [ ] Implement RNN, LSTM, and GRU in PyTorch and explain their sequence architecture.
-- [ ] Use `TimeSeriesSplit` or explicit walk-forward folds with all preprocessing fitted inside each training fold.
-- [ ] Compare common folds and horizons using error metrics, stability, runtime, residuals, and uncertainty where available.
-- [ ] Explain model strengths, weaknesses, failure cases, and differences between asset classes.
-- [ ] Recommend a model by asset and horizon based on evidence rather than a single global winner.
-- [ ] Produce a reproducible report, presentation, demonstration, and documented execution workflow.
-
-### Final academic deliverables
-
-1. Source repository with reproducible environment and configuration files.
-2. Data-source register, data dictionary, and generated quality reports.
-3. Exploratory analysis showing preprocessing and time-series characteristics.
-4. Statistical-model experiment and Box-Jenkins diagnostics.
-5. Lag-based machine-learning experiment with temporal validation.
-6. PyTorch RNN/LSTM/GRU experiment with learning curves and tuning evidence.
-7. Cross-market, cross-horizon comparison tables and figures.
-8. Streamlit dashboard that reproduces the primary analysis from saved artifacts.
-9. Scientific report containing methodology, results, interpretation, limitations, and conclusions.
-10. Presentation/demo materials with a short reproducible scenario.
-
-### Final experiment matrix
-
-At minimum, the final results should cover the following matrix. If compute or time is limited, reduce tuning breadth rather than omitting entire required model families.
-
-| Dimension | Minimum coverage |
-| --- | --- |
-| Assets | One crypto, one equity, one forex pair, and one oil series |
-| Frequency | Daily |
-| Horizons | 1, 5, and 20 steps, adjusted only with written justification |
-| Baselines | Last value, drift, and seasonal naive when a valid season exists |
-| Statistical | Exponential smoothing/Holt-Winters, ARIMA, and SARIMA when justified |
-| Machine learning | Ridge or Lasso, Random Forest, and XGBoost or LightGBM |
-| Deep learning | PyTorch RNN, LSTM, and GRU |
-| Validation | At least three chronological walk-forward folds plus one locked final test period |
-| Core metrics | MAE, RMSE, sMAPE, MASE, and runtime; AIC/BIC for applicable models |
-| Diagnostics | Residual plot, residual ACF, Ljung-Box test, and interval coverage where available |
-| Reporting | Fold mean and variability, final holdout result, limitations, and selection rationale |
-
-## 4. Scope
-
-### Minimum viable academic scope
-
-Use one representative instrument from each market:
-
-| Asset class | Suggested instrument | Example symbol | Important consideration |
-| --- | --- | --- | --- |
-| Crypto | Bitcoin | `BTC-USD` | Trades continuously, 7 days per week. |
-| Stock/index | S&P 500 ETF or Apple | `SPY` or `AAPL` | Exchange calendar, holidays, adjusted prices. |
-| Forex | Euro/US dollar | `EURUSD` | Approximately 24/5, provider-dependent timestamps. |
-| Commodity | Crude oil | `CL` continuous futures or a documented spot benchmark | Futures rolls can create artificial price jumps. |
-
-Start with **daily frequency** for a fair, manageable comparison. Intraday data can be an optional extension after the daily pipeline is correct.
-
-### Explicit non-goals for the first release
-
-- Live automated trading
-- Portfolio execution or brokerage integration
-- Guaranteed price predictions
-- High-frequency forecasting
-- Training one global model across every asset before single-asset baselines are validated
-- Supporting every possible data provider
-
-## 5. Reuse, replace, and upgrade
-
-### Reuse
-
-- Streamlit navigation, visual style, and Plotly charts
-- CLI entry-point concept
-- Metric helper functions after adding tests
-- ARIMA, Prophet, LSTM, GRU, and ensemble code as references
-- Saved-artifact concept
-- Existing crypto dataset as one documented data source
-
-### Refactor heavily
-
-- Model interfaces and model registry
-- Training orchestration
-- Configuration handling
-- Result serialization
-- Dataset loading and validation
-- Feature generation
-- Streamlit business logic
-
-### Replace
-
-- Global feature engineering across mixed assets
-- Training on rows from multiple symbols as though they form one series
-- A single fixed 80/20 evaluation as the main evidence
-- TensorFlow sequence models, replacing them with PyTorch for course alignment
-- Hard-coded ARIMA order `(5, 1, 0)` as the only statistical configuration
-- Fixed five-epoch neural-network training
-- Unweighted averaging as the only ensemble strategy
-
-## 6. Correctness issues that must be resolved first
-
-1. Feature calculations must be grouped by `asset_id` and ordered by timestamp.
-2. A model run must never cross from one instrument into another unless it is an explicitly designed global/panel model.
-3. Data must be split before fitting scalers, transformations, feature selectors, or model parameters.
-4. Lag and rolling features must use past values only.
-5. Hyperparameter selection must use validation folds, never the final test set.
-6. Final test data must remain untouched until the selected model is evaluated once.
-7. Results must always identify dataset version, asset, frequency, target, horizon, split dates, features, model parameters, seed, and code version.
-8. Backtest forecasts must distinguish one-step forecasts using observed history from recursive multi-step forecasts using prior predictions.
-
-## 7. Target architecture
-
-```text
-marketcast-lab/
-├── README.md
-├── ROADMAP.md
-├── pyproject.toml
-├── configs/
-│   ├── assets.yaml
-│   ├── experiments.yaml
-│   └── models.yaml
-├── data/
-│   ├── raw/                 # Immutable source downloads; normally gitignored
-│   ├── interim/             # Normalized provider output
-│   └── processed/           # Validated modeling datasets
-├── notebooks/
-│   ├── 01_data_audit.ipynb
-│   ├── 02_eda_stationarity.ipynb
-│   ├── 03_statistical_models.ipynb
-│   ├── 04_ml_models.ipynb
-│   └── 05_deep_learning.ipynb
-├── src/market_forecast/
-│   ├── cli.py
-│   ├── config.py
-│   ├── data/
-│   │   ├── schema.py
-│   │   ├── validation.py
-│   │   ├── registry.py
-│   │   └── providers/
-│   │       ├── base.py
-│   │       ├── csv_provider.py
-│   │       └── market_provider.py
-│   ├── analysis/
-│   │   ├── decomposition.py
-│   │   ├── stationarity.py
-│   │   └── diagnostics.py
-│   ├── features/
-│   │   ├── transforms.py
-│   │   ├── lags.py
-│   │   └── technical.py
-│   ├── models/
-│   │   ├── base.py
-│   │   ├── baselines.py
-│   │   ├── statistical.py
-│   │   ├── machine_learning.py
-│   │   ├── deep_learning.py
-│   │   └── registry.py
-│   ├── evaluation/
-│   │   ├── splits.py
-│   │   ├── backtest.py
-│   │   ├── metrics.py
-│   │   └── comparison.py
-│   ├── experiments/
-│   │   ├── runner.py
-│   │   └── artifacts.py
-│   └── dashboard/
-│       ├── app.py
-│       ├── pages/
-│       └── charts.py
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── fixtures/
-├── artifacts/               # Models and reproducible experiment outputs
-├── reports/
-│   ├── figures/
-│   └── final_report.md
-└── scripts/
-    ├── fetch_data.py
-    ├── run_experiments.py
-    └── launch_dashboard.py
-```
-
-Notebooks should call functions from `src/`; they must not become a second, independent implementation of the pipeline.
-
-## 8. Canonical data contract
-
-All providers should normalize data into a common long-format schema:
-
-| Column | Meaning |
-| --- | --- |
-| `asset_id` | Stable internal identifier, such as `crypto:BTC-USD`. |
-| `symbol` | Provider-facing ticker or symbol. |
-| `asset_class` | `crypto`, `equity`, `forex`, or `commodity`. |
-| `timestamp` | Timezone-aware timestamp before daily normalization. |
-| `frequency` | Daily, hourly, or another explicit interval. |
-| `open`, `high`, `low`, `close` | Raw OHLC values. |
-| `adjusted_close` | Corporate-action-adjusted value when available. |
-| `volume` | Nullable because it may not be meaningful for some forex sources. |
-| `currency` | Quote currency. |
-| `provider` | Data origin. |
-| `retrieved_at` | Data lineage timestamp. |
-
-Each processed dataset should have a validation report containing:
-
-- Row count and time range
-- Duplicate-key count
-- Missing-value and missing-timestamp summary
-- Sampling-frequency consistency
-- Non-positive or impossible OHLC checks
-- Outlier flags
-- Provider and retrieval metadata
-- Transformations applied
-
-## 9. Model interface
-
-Every model family should use a shared conceptual interface:
-
-```python
-class ForecastModel:
-    def fit(self, train_frame, validation_frame=None): ...
-    def predict(self, horizon, context=None): ...
-    def get_params(self): ...
-    def save(self, path): ...
-```
-
-Model adapters may internally use statsmodels, scikit-learn, or PyTorch. The evaluation layer should interact with the interface rather than contain model-specific branches.
-
-Required model groups:
-
-1. **Baselines:** last value, drift, moving average, and seasonal naive where meaningful.
-2. **Statistical:** Simple Exponential Smoothing, Holt/Holt-Winters, ARIMA, and SARIMA.
-3. **Machine learning:** Ridge, Lasso, Random Forest, and XGBoost or LightGBM using leakage-safe lag/rolling features.
-4. **Deep learning:** vanilla RNN, LSTM, and GRU implemented in PyTorch.
-5. **Optional extensions:** Prophet, GARCH for volatility, attention/Transformer, and validated ensembles.
-
-## 10. Evaluation protocol
-
-### Data partitions
-
-Use three chronological regions:
-
-- **Training/validation region:** walk-forward folds for tuning and model selection
-- **Final test region:** locked until selection is complete
-- **Optional live holdout:** the most recent period for the final demonstration
-
-### Backtesting
-
-Implement expanding-window backtesting first:
-
-```text
-Fold 1: [train------][validate]
-Fold 2: [train------------][validate]
-Fold 3: [train------------------][validate]
-                                      [final test]
-```
-
-Evaluate at multiple horizons, such as 1, 5, and 20 daily steps. Use equal folds and horizons when comparing models.
-
-### Metrics
-
-Required:
-
-- MAE
-- MSE and RMSE
-- MAPE where the target is safely away from zero
-- sMAPE
-- MASE against a defined naive baseline
-- AIC and BIC for applicable statistical models
-- Training and inference time
-
-Recommended diagnostics:
-
-- Mean error/bias
-- Residual ACF and Ljung-Box test
-- Directional accuracy as a secondary metric, not the main forecasting score
-- Confidence/prediction interval coverage when intervals are produced
-- Diebold-Mariano testing for selected final comparisons, if time permits
-
-Aggregate results by model, asset, asset class, horizon, and fold. Report both the mean and variability; a single best-case metric is insufficient.
-
-## 11. Experiment reproducibility
-
-Each experiment should produce an immutable run directory:
+Each immutable experiment run should produce:
 
 ```text
 artifacts/runs/<run_id>/
@@ -368,238 +59,213 @@ artifacts/runs/<run_id>/
 └── figures/
 ```
 
-The run metadata should include:
+---
 
-- Run ID and timestamp
-- Git commit when available
-- Python and dependency versions
-- Random seeds
-- Asset and data range
-- Feature and transform configuration
-- Model parameters
-- Split/fold boundaries
-- Forecast strategy and horizon
-- Warnings and failures
+## Phase 1 prompt — Establish a trustworthy single-asset foundation
 
-Start with JSON/CSV/Parquet artifacts. Add MLflow only if experiment volume makes the simple format difficult to manage.
+```text
+You are implementing Phase 1 of MarketCast Lab in the current repository.
 
-## 12. Dashboard requirements
+GOAL
+Turn the existing prototype into a tested, reproducible, leakage-safe BTC forecasting foundation. Do not add other markets or advanced models yet. Preserve working legacy entry points where practical, but shared library code becomes the source of truth.
 
-The upgraded Streamlit application should include:
+FIRST, INSPECT
+- Read README.md, ROADMAP.md, requirements.txt, main.py, and every file under src/.
+- Run git status and preserve all user changes.
+- Run the existing CLI/dashboard smoke path if feasible and record current failures or behavioral limitations.
+- Identify where rows from different symbols are mixed, where features are calculated before asset selection, and where preprocessing is duplicated.
 
-1. **Data Explorer** - asset selection, date range, missing-data summary, raw/adjusted price, returns, and volume.
-2. **Time-Series Analysis** - decomposition, rolling statistics, ACF/PACF, stationarity tests, and transformations.
-3. **Experiment Setup** - asset, target, frequency, horizon, split strategy, models, and feature configuration.
-4. **Backtest Results** - fold-aware forecasts, metrics, residual plots, interval coverage, and runtime.
-5. **Model Comparison** - rankings by asset and horizon with stability and limitations, not only the lowest RMSE.
-6. **Future Forecast** - clearly separated from historical backtesting, with uncertainty and a non-advisory disclaimer.
-7. **Experiment History** - saved configurations and reproducible results.
+IMPLEMENT STEP BY STEP
+1. Add a supported Python version and pyproject.toml with runtime and development dependencies. Keep requirements.txt compatible temporarily if existing entry points need it.
+2. Create the `src/market_forecast/` package with focused modules for configuration, data schema/validation, features, baselines, evaluation, experiments, and dashboard integration. Migrate incrementally rather than deleting working code upfront.
+3. Normalize the bundled crypto data into the canonical long-format contract. Create stable `asset_id` values, sort by timestamp, reject duplicate asset/timestamp keys, and produce a machine-readable quality report.
+4. Select one asset before truncation, transformation, splitting, lagging, rolling calculations, or model training. Make every feature operation explicitly per-asset and past-only.
+5. Implement last-value and drift forecasts plus seasonal naive only when a defensible seasonal period exists.
+6. Implement chronological train/validation/final-test boundaries. All transforms must expose fit/transform behavior so tests can prove they are fit only on training data.
+7. Remove or route around duplicated forecasting/preprocessing logic in the CLI and Streamlit app. UI code should call shared functions.
+8. Add unit tests for canonical schema validation, sorting, duplicate detection, cross-asset lag isolation, past-only rolling windows, no split overlap, and train-only scaling.
+9. Add one integration test that loads the bundled data, selects BTC, runs a baseline forecast, and writes a minimal result artifact.
+10. Update README.md with setup commands, current limitations, and the exact trustworthy BTC workflow.
 
-The dashboard should read results created by the experiment pipeline. It should not contain a duplicate training implementation.
+REQUIRED OUTPUTS
+- pyproject.toml and a package under src/market_forecast/
+- Canonical schema and validation report code
+- Leakage-safe per-asset feature code
+- Naive baseline implementations
+- Unit and integration tests
+- Reproducible BTC smoke command
+- A short migration note identifying legacy code still awaiting replacement
 
-## 13. Implementation phases
+ACCEPTANCE CHECKS
+- A clean environment can install the project and run tests using documented commands.
+- BTC is selected before any feature engineering or split.
+- Tests fail if a lag/rolling value crosses an asset or temporal boundary.
+- No scaler or transform sees validation/final-test values during fit.
+- One deterministic BTC baseline run completes and saves its configuration, boundaries, predictions, and metrics.
+- Existing user-facing entry points either still work or clearly redirect to their replacements.
 
-### Phase 0 - Preserve and baseline the current project
+SCOPE CONTROL
+Do not add equity, forex, or oil providers. Do not build PyTorch networks. Do not polish the dashboard. Finish correctness and tests first.
 
-- Create a migration branch.
-- Record the current application behavior with screenshots and smoke tests.
-- Add a dependency lock using `pyproject.toml` and a supported Python version.
-- Document the current crypto dataset source and license.
-- Save a reproducible baseline run before changing model behavior.
-
-**Exit criteria:** the legacy dashboard and CLI can be started reproducibly, and known defects are documented.
-
-### Phase 1 - Repair single-asset correctness
-
-- Introduce `asset_id` and the canonical schema.
-- Validate and sort each series independently.
-- Group all feature engineering by asset.
-- Select an asset before truncation, transformation, and splitting.
-- Add naive forecasts.
-- Add unit tests that fail if values leak across assets or time boundaries.
-- Remove duplicated forecasting logic between training and Streamlit.
-
-**Exit criteria:** BTC can be trained and evaluated end-to-end with no cross-asset contamination and passes leakage tests.
-
-### Phase 2 - Build the evaluation framework
-
-- Implement expanding-window and rolling-window splitters.
-- Lock a final test period.
-- Add fold-aware predictions and metric aggregation.
-- Add MAE, RMSE, sMAPE, MASE, runtime, and statistical diagnostics.
-- Define one-step and recursive multi-step protocols.
-- Persist complete run metadata and predictions.
-
-**Exit criteria:** repeated backtests are deterministic, comparable, and reproducible from one command.
-
-### Phase 3 - Complete statistical analysis and models
-
-- Add rolling statistics and seasonal decomposition.
-- Add ADF and KPSS stationarity tests.
-- Add ACF/PACF and residual diagnostics.
-- Implement exponential smoothing and Holt-Winters.
-- Implement ARIMA/SARIMA candidate selection using validation plus AIC/BIC.
-- Document when transformations and seasonal periods are appropriate.
-
-**Exit criteria:** the statistical-model report includes assumptions, diagnostics, selection reasoning, and final backtest results.
-
-### Phase 4 - Add lag-based machine learning
-
-- Build past-only lag, rolling, calendar, trend, and volatility features.
-- Use scikit-learn `Pipeline` objects so transformations fit on training folds only.
-- Implement Ridge, Lasso, Random Forest, and XGBoost/LightGBM.
-- Tune a small justified hyperparameter space through time-series validation.
-- Add feature-importance or coefficient analysis with suitable caveats.
-
-**Exit criteria:** ML models are compared fairly against naive and ARIMA-family baselines on identical folds.
-
-### Phase 5 - Migrate deep learning to PyTorch
-
-- Implement reusable dataset/window builders.
-- Implement vanilla RNN, LSTM, and GRU models.
-- Add deterministic seeds, early stopping, checkpointing, learning-rate controls, and device selection.
-- Support direct or recursive multi-step forecasting and document the choice.
-- Tune lookback, hidden size, layers, dropout, batch size, optimizer, and learning rate on validation data.
-- Record learning curves and parameter counts.
-
-**Exit criteria:** all three sequence models train reproducibly and are compared with statistical and ML baselines.
-
-### Phase 6 - Generalize to multiple markets
-
-- Add provider adapters for equities, forex, and commodities.
-- Normalize timezones and daily boundaries.
-- Preserve trading calendars rather than filling market holidays as ordinary observations.
-- Use adjusted prices for equity analysis when appropriate.
-- Document oil-series construction and futures-roll handling.
-- Run the same evaluation contract for each representative asset.
-
-**Exit criteria:** at least one crypto, equity, forex, and oil series completes the same experiment suite with comparable result artifacts.
-
-### Phase 7 - Upgrade the dashboard
-
-- Rename crypto-specific UI elements to generic asset terminology.
-- Split the interface into analysis, experiments, comparison, and forecasting pages.
-- Read experiment artifacts rather than retrain implicitly inside UI rendering.
-- Add fold-level visualizations, residual diagnostics, uncertainty, and run metadata.
-- Clearly mark historical evaluation versus speculative future forecasts.
-
-**Exit criteria:** the dashboard can reproduce the report's primary figures and explain the selected model for each asset/horizon.
-
-### Phase 8 - Testing, reporting, and presentation
-
-- Reach strong test coverage for data boundaries, transformations, splitters, metrics, artifact loading, and model smoke tests.
-- Run all final experiments from clean configuration files.
-- Produce tables and figures directly from saved artifacts.
-- Write the scientific report with methods, experiments, limitations, and conclusions.
-- Prepare a concise live demo and presentation.
-- Verify every claim against saved results.
-
-**Exit criteria:** another student can clone the repository, obtain or load the documented data, reproduce the selected experiments, and understand the conclusions.
-
-## 14. Testing strategy
-
-### Unit tests
-
-- Canonical-schema validation
-- No cross-asset lag/rolling contamination
-- No train/test overlap
-- Scaler and transform fitting only on training data
-- Correct fold boundaries
-- Metric values on known examples
-- Multi-step forecast length and alignment
-- Artifact serialization round trips
-
-### Integration tests
-
-- CSV provider to processed dataset
-- One complete statistical-model experiment
-- One complete scikit-learn experiment
-- Small CPU-only PyTorch training run
-- Saved run to dashboard loading
-
-### Regression tests
-
-- Fixed small dataset with expected split dates and metric tolerances
-- CLI smoke tests
-- Dashboard import/startup smoke test
-
-## 15. Suggested command-line experience
-
-```bash
-# Validate and prepare configured datasets
-python -m market_forecast.cli data prepare --config configs/assets.yaml
-
-# Analyze one asset
-python -m market_forecast.cli analyze --asset crypto:BTC-USD
-
-# Run a reproducible experiment suite
-python -m market_forecast.cli experiment run --config configs/experiments.yaml
-
-# Compare completed runs
-python -m market_forecast.cli report build --latest
-
-# Launch the dashboard
-streamlit run src/market_forecast/dashboard/app.py
+At completion, report changed files, commands run, test results, remaining risks, and the exact command the Phase 2 agent should run first.
 ```
 
-## 16. Milestones and suggested schedule
+---
 
-| Week | Deliverable |
-| --- | --- |
-| 1 | Preserve baseline, define schema, repair per-asset processing, add naive baseline. |
-| 2 | Build walk-forward evaluation, metrics, artifacts, and tests. |
-| 3 | Complete EDA, stationarity, decomposition, Holt-Winters, ARIMA/SARIMA. |
-| 4 | Add lag-feature Ridge/Lasso, Random Forest, and boosting models. |
-| 5 | Implement and validate PyTorch RNN/LSTM/GRU. |
-| 6 | Add stock, forex, and oil data adapters; run cross-market experiments. |
-| 7 | Upgrade Streamlit and generate final comparison figures. |
-| 8 | Complete report, presentation, reproducibility audit, and rehearsal. |
+## Phase 2 prompt — Build evaluation and all required model families
 
-If less time is available, reduce the number of assets and tuning combinations before removing model families or correct validation.
+```text
+You are implementing Phase 2 of MarketCast Lab. Phase 1 should already provide a canonical, tested, single-asset BTC pipeline. Verify its acceptance checks before editing; repair regressions if necessary.
 
-## 17. Definition of done
+GOAL
+Create one reproducible experiment engine that fairly evaluates baselines, statistical models, lag-based machine learning, and PyTorch sequence models on identical BTC folds and horizons.
 
-The project is complete when:
+IMPLEMENT STEP BY STEP
+1. Implement configurable expanding-window backtesting first; optionally add rolling windows afterward. Use at least three chronological validation folds and a locked final test period.
+2. Explicitly distinguish one-step forecasts using observed history from recursive or direct multi-step forecasts. Store the strategy with every run and align predictions exactly to target timestamps for horizons 1, 5, and 20.
+3. Implement fold-aware MAE, MSE, RMSE, sMAPE, MASE, mean error, training time, and inference time. Guard MAPE around zero. Aggregate mean and variability without discarding fold-level results.
+4. Add residual plots/data, residual ACF, Ljung-Box testing, and interval coverage when a model supplies intervals.
+5. Define a shared ForecastModel adapter contract (`fit`, `predict`, `get_params`, `save`) and a model registry. The evaluator must not contain large model-specific branches.
+6. Add statistical analysis: rolling statistics, decomposition, ADF/KPSS, ACF/PACF, exponential smoothing/Holt-Winters, ARIMA, and SARIMA when diagnostics justify seasonality. Select candidates with validation evidence plus AIC/BIC, never final-test performance.
+7. Add past-only lag, rolling, trend, calendar, and volatility features. Use scikit-learn Pipeline/ColumnTransformer behavior so preprocessing is fit within each fold. Implement Ridge or Lasso, Random Forest, and XGBoost or LightGBM (choose one and document why).
+8. Replace TensorFlow sequence training with reusable PyTorch window datasets and vanilla RNN, LSTM, and GRU models. Add deterministic seeds, CPU support, device selection, early stopping, checkpoints, learning curves, and parameter counts.
+9. Use bounded, documented tuning spaces. Tune only on validation folds. Provide fast smoke configurations for CI and fuller experiment configurations for final runs.
+10. Implement immutable run artifacts with config, data manifest, environment, fold predictions, metrics, diagnostics, models, figures, warnings, and failures. Add CLI commands to run and compare experiments.
+11. Add unit tests for folds, metrics, forecast alignment, window generation, artifact round trips, and model registry behavior. Add CPU-only integration smoke tests for one statistical, one scikit-learn, and each PyTorch architecture.
+12. Create an analysis/report generator from saved artifacts; notebooks may demonstrate results but must call package functions.
 
-- The repository and application use the new multi-market identity.
-- At least four representative market series use a documented common schema.
-- No preprocessing, feature, scaling, or evaluation leakage remains.
-- Naive, statistical, ML, RNN, LSTM, and GRU models are evaluated.
-- Deep-learning models are implemented in PyTorch.
-- Walk-forward results cover multiple horizons and include variability across folds.
-- Statistical assumptions and residuals are analyzed.
-- Every reported result can be traced to a saved configuration and data manifest.
-- Tests protect asset and time boundaries.
-- The dashboard distinguishes backtests from future forecasts and states limitations.
-- The report compares model families, explains results, identifies limitations, and recommends methods by market/horizon.
-- Setup and reproduction commands work from a clean environment.
+REQUIRED OUTPUTS
+- Shared model interface and registry
+- Walk-forward backtester and locked-test workflow
+- Statistical, ML, RNN, LSTM, and GRU implementations
+- Fold-aware metrics and diagnostics
+- Immutable run artifacts and comparison command
+- Fast test configs and full BTC experiment configs
+- Generated BTC comparison table/figures from artifacts
 
-## 18. Risks and mitigations
+ACCEPTANCE CHECKS
+- Every model is evaluated on the same stored fold boundaries and target timestamps.
+- Re-running a smoke configuration with the same seed produces equivalent splits and metrics within documented numerical tolerance.
+- Hyperparameter selection cannot access the final test set.
+- A complete BTC run includes baselines, exponential smoothing, ARIMA/SARIMA when justified, Ridge/Lasso, Random Forest, boosting, RNN, LSTM, and GRU.
+- Result tables report fold mean/variability, final holdout performance, runtime, and diagnostic availability.
+- Tests detect intentionally introduced leakage or forecast misalignment.
 
-| Risk | Mitigation |
-| --- | --- |
-| Scope becomes too large | Begin with one asset per class and daily data; treat extra assets as extensions. |
-| Neural models consume excessive time | Use bounded search spaces, early stopping, CPU smoke configurations, and saved checkpoints. |
-| Unfair comparison between markets | Use a shared evaluation contract while preserving each market's calendar and target semantics. |
-| Oil data contains contract-roll artifacts | Use a documented continuous series and explain its adjustment method. |
-| MAPE becomes misleading | Include sMAPE and MASE and explain metric limitations. |
-| Dashboard duplicates pipeline logic | Make the UI consume saved experiment artifacts and shared library functions. |
-| Strong-looking results are caused by leakage | Add automated boundary tests and manually audit fold dates and transformations. |
-| Data cannot be redistributed | Store download instructions and manifests rather than unlicensed raw data. |
+SCOPE CONTROL
+Do not broaden to other markets or redesign Streamlit. Optimize for methodological correctness and a manageable CPU-capable experiment workflow.
 
-## 19. Immediate next actions
+At completion, report changed files, experiment/test commands, runtime expectations, test results, the best-supported BTC findings without overstating them, and prerequisites for Phase 3.
+```
 
-Execute these in order:
+---
 
-1. Rename the repository to `marketcast-lab` and update project-facing text.
-2. Create the package structure and dependency configuration while preserving the legacy entry points temporarily.
-3. Write tests demonstrating the current cross-asset contamination bug.
-4. Fix per-asset selection and feature engineering.
-5. Implement the canonical schema, data validation, and naive baselines.
-6. Implement the walk-forward evaluator and artifact contract.
-7. Migrate sequence models from TensorFlow to PyTorch.
-8. Add the remaining statistical and ML model families.
-9. Add one equity, one forex, and one oil dataset through provider adapters.
-10. Run the final experiment matrix before completing the dashboard and report.
+## Phase 3 prompt — Generalize to four markets and produce defensible results
 
-The first technical milestone is deliberately narrow: **produce one trustworthy, reproducible BTC experiment before adding another market**. Once that path is correct, new assets become adapters and configurations rather than new one-off applications.
+```text
+You are implementing Phase 3 of MarketCast Lab. Phase 2 should already run the full model contract on BTC. Verify that shared folds, leakage tests, and artifact reproduction pass before adding providers.
+
+GOAL
+Run the same defensible experiment contract on one crypto, one equity, one forex pair, and one crude-oil series, then explain how model behavior changes by asset class and forecast horizon.
+
+IMPLEMENT STEP BY STEP
+1. Add provider adapters behind a shared provider interface for the selected equity, forex, and oil sources. Keep the CSV provider. Store source URL/name, retrieval time, license/redistribution status, symbol mapping, timezone, currency, and adjustment method in manifests.
+2. Select final instruments: BTC/USD; SPY or AAPL; EUR/USD; and a documented oil spot benchmark or continuous futures series. If using futures, explain roll construction and identify roll-related jumps.
+3. Normalize provider output to the canonical schema without erasing market-specific calendars. Do not fill exchange holidays or weekends as if they were ordinary observations. Use adjusted equity prices when appropriate and document target semantics.
+4. Generate a quality report per asset: row count/range, duplicate keys, missing values/timestamps, frequency consistency, invalid OHLC values, outlier flags, provenance, and transformations.
+5. Produce EDA per asset: price/returns, rolling statistics, trend/seasonal decomposition when justified, ACF/PACF, ADF/KPSS, volatility observations, and a written decision for transformations/seasonal periods.
+6. Define common comparable folds/horizons while respecting each asset's observation calendar. Record exact boundaries. If a common setting is invalid for one market, document and justify the smallest necessary exception.
+7. Run the required experiment matrix for horizons 1, 5, and 20: last value, drift, seasonal naive when valid, exponential smoothing/Holt-Winters, ARIMA/SARIMA when valid, Ridge/Lasso, Random Forest, boosting, PyTorch RNN, LSTM, and GRU.
+8. If compute is constrained, reduce tuning combinations or training epochs with early stopping; do not remove required model families. Preserve smoke/full configurations and record failures instead of silently excluding them.
+9. Generate cross-market tables and figures by asset, class, horizon, model, and fold. Include mean/variability, final holdout, runtime, residual diagnostics, and interval coverage where available.
+10. Analyze strengths, weaknesses, failure cases, stability, and complexity. Recommend a model per asset and horizon based on evidence; do not declare one universal winner.
+11. Add provider/normalization integration tests and a small four-asset end-to-end regression fixture with fixed expected split dates and metric tolerances.
+
+REQUIRED OUTPUTS
+- Four documented provider/data paths and manifests
+- Four data-quality reports and EDA outputs
+- Complete saved experiment artifacts for the minimum matrix
+- Cross-market comparison tables and figures
+- Evidence-based model recommendations by asset/horizon
+- A limitations note covering data source, calendars, oil rolls, uncertainty, compute, and non-stationarity
+
+ACCEPTANCE CHECKS
+- One crypto, equity, forex, and oil series passes the same schema and evaluation interfaces.
+- No feature or model run crosses assets.
+- Calendar handling is explicit and no artificial holiday observations are introduced.
+- Every reported number traces to a run ID, config, data manifest, and fold prediction file.
+- Comparisons use common folds/horizons or clearly label justified exceptions.
+- Conclusions include variability and failure cases, not only the lowest mean RMSE.
+
+SCOPE CONTROL
+Use one asset per class and daily frequency. Do not add intraday data, live trading, portfolio optimization, global panel models, Transformers, GARCH, or broad asset coverage unless all acceptance checks are already complete.
+
+At completion, report data sources, licenses/redistribution constraints, commands and runtimes, failed runs, coverage of the required matrix, key findings, and exact artifacts needed by Phase 4.
+```
+
+---
+
+## Phase 4 prompt — Deliver the dashboard, report, and reproducibility package
+
+```text
+You are implementing Phase 4, the final delivery phase of MarketCast Lab. Treat saved Phase 3 artifacts as the source of truth. Verify traceability and required matrix coverage before changing presentation code.
+
+GOAL
+Turn the validated experiment system and results into a clear Streamlit application, scientific report, presentation/demo, and clean reproducibility workflow suitable for course assessment.
+
+IMPLEMENT STEP BY STEP
+1. Audit the repository against this roadmap and create a gap checklist. Resolve missing correctness/evidence items before visual polish.
+2. Refactor the Streamlit app into: Data Explorer, Time-Series Analysis, Experiment Setup, Backtest Results, Model Comparison, Future Forecast, and Experiment History.
+3. Make the dashboard read validated datasets and immutable run artifacts through shared package functions. It must not retrain implicitly during rendering or duplicate metrics/forecast logic.
+4. Show fold-aware forecasts, mean and variability of metrics, residual diagnostics, interval coverage, runtime, run metadata, and limitations. Clearly separate historical backtests from speculative future forecasts and display a non-advisory disclaimer.
+5. Make comparison views filterable by asset, asset class, horizon, fold, and model. Present stability and complexity alongside accuracy; explain why the recommended model may differ by asset/horizon.
+6. Generate report tables and figures directly from saved artifacts. Write the scientific report with: problem/research question, time-series concepts, data/provenance, cleaning, transformations, EDA, validation design, models, tuning, metrics, results, diagnostics, cross-market interpretation, limitations, threats to validity, conclusions, and recommendations.
+7. Explicitly define trend, seasonality, cycles, noise, stationarity, target, horizon, and forecast strategy. Explain RNN/LSTM/GRU architecture choices and why preprocessing avoids leakage.
+8. Prepare a concise presentation and a short deterministic demo scenario that loads existing artifacts. Include fallback screenshots/figures in case training or network access is unavailable.
+9. Finish README setup, data acquisition, experiment, report, dashboard, and troubleshooting instructions. Add data dictionary, source/license register, configuration reference, and expected runtime/hardware notes.
+10. Run unit, integration, regression, CLI, and dashboard startup smoke tests from a clean environment. Run the documented reproduction path and fix discrepancies.
+11. Verify every claim and displayed number against saved artifacts. Remove stale TensorFlow instructions/artifacts or clearly label them as legacy and excluded from results.
+12. Produce a final assessment checklist mapped to: data analysis (30%), model building (30%), and evaluation/presentation (40%).
+
+REQUIRED OUTPUTS
+- Artifact-driven Streamlit dashboard
+- Final scientific report with generated tables/figures
+- Presentation and deterministic demo script/scenario
+- Complete setup, data, experiment, and reproduction documentation
+- Data dictionary and source/license register
+- Final automated test and reproducibility results
+- Rubric/evidence checklist
+
+ACCEPTANCE CHECKS
+- Another student can follow README instructions from a clean clone, obtain permitted data or use documented fixtures, run the smoke workflow, build the report, and launch the dashboard.
+- The dashboard reproduces the report's principal results from the same run IDs.
+- All required course concepts, model families, horizons, metrics, diagnostics, and four asset classes are evidenced.
+- Backtests and future forecasts are visually and textually distinct.
+- Every substantive conclusion links to saved results; no manually copied metric is the sole source of a claim.
+- The final recommendation is per asset/horizon and acknowledges uncertainty, instability, and non-advisory use.
+
+SCOPE CONTROL
+Do not add new model families or markets during final delivery unless needed to close a documented requirement. Prioritize reproducibility, interpretation, and a reliable demo over extra features.
+
+At completion, report final deliverables, reproduction commands, test results, known limitations, rubric coverage, and any claim that still lacks sufficient evidence.
+```
+
+## Suggested execution order and stopping rules
+
+1. **Phase 1 — Trust the data path.** Stop if asset/time leakage tests do not pass.
+2. **Phase 2 — Trust the comparison engine.** Stop if folds differ unintentionally between models or the final test participates in tuning.
+3. **Phase 3 — Trust the cross-market evidence.** Stop if provenance, calendars, or run traceability are incomplete.
+4. **Phase 4 — Communicate and reproduce.** Stop before submission if a clean-clone smoke run or claim-to-artifact audit fails.
+
+If time is short, reduce tuning breadth, dataset length, or optional visualizations. Do not remove required model families, chronological validation, locked testing, core diagnostics, or traceability.
+
+## Final definition of done
+
+- Four representative daily market series use the documented common schema.
+- Tests protect asset boundaries, temporal boundaries, transformations, folds, metrics, serialization, and representative model runs.
+- Naive, statistical, lag-based ML, RNN, LSTM, and GRU models run through one evaluation contract.
+- Results cover horizons 1, 5, and 20 across at least three walk-forward folds and one locked final test.
+- Statistical assumptions, residuals, runtime, uncertainty availability, and fold variability are reported.
+- Every result is traceable to configuration, data manifest, environment, predictions, and run ID.
+- The dashboard consumes artifacts and distinguishes evaluation from future speculation.
+- The report compares markets and model families, documents limitations, and recommends models by asset/horizon.
+- A clean, documented smoke workflow reproduces the core evidence.

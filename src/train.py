@@ -28,6 +28,7 @@ from .models import (
     normalize_optimizer,
 )
 from .models import HAS_PROPHET
+from market_forecast.data import load_bundled_crypto, select_asset
 
 logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
 logging.getLogger("prophet").setLevel(logging.WARNING)
@@ -262,9 +263,11 @@ def _train_ensemble(component_results):
     }
 
 
-def load_and_prepare_data():
+def load_and_prepare_data(asset_id="crypto:BTC-USD"):
     print("Loading data...")
-    df = load_data()
+    canonical = load_bundled_crypto()
+    df = select_asset(canonical, asset_id).rename(columns={"timestamp": "date"})
+    df["crypto"] = df["symbol"]
     if df.empty:
         print("No data loaded.")
         return None
@@ -295,6 +298,10 @@ def train_models(df, selected_models=None, max_points=5000, lookback=30, optimiz
     if "close" not in df.columns:
         print("Missing close column.")
         return []
+
+    asset_column = "asset_id" if "asset_id" in df.columns else "crypto" if "crypto" in df.columns else None
+    if asset_column is not None and df[asset_column].nunique() != 1:
+        raise ValueError("Legacy training requires one asset selected before feature engineering and splitting")
 
     if "date" in df.columns:
         df = df.sort_values("date").reset_index(drop=True)

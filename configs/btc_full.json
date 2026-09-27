@@ -1,0 +1,30 @@
+{
+  "asset_id": "crypto:BTC-USD",
+  "artifacts_dir": "artifacts/runs",
+  "models": ["last_value", "drift", "seasonal_naive", "exponential_smoothing", "holt_winters", "arima", "sarima", "ridge", "random_forest", "xgboost", "rnn", "lstm", "gru"],
+  "horizons": [1, 5, 20],
+  "folds": 3,
+  "final_test_size": 20,
+  "min_train_size": 365,
+  "max_train_rows": 730,
+  "seasonal_period": 7,
+  "strategy": "recursive",
+  "seed": 42,
+  "model_params": {
+    "holt_winters": {"seasonal_period": 7},
+    "sarima": {"order": [1, 1, 0], "seasonal_order": [1, 0, 0, 7]},
+    "ridge": {"lookback": 20, "alpha": 1.0},
+    "random_forest": {"lookback": 20, "n_estimators": 100, "max_depth": 8},
+    "xgboost": {"lookback": 20, "n_estimators": 100, "max_depth": 3, "learning_rate": 0.05},
+    "rnn": {"lookback": 20, "hidden_size": 16, "epochs": 20, "batch_size": 32, "patience": 3},
+    "lstm": {"lookback": 20, "hidden_size": 16, "epochs": 20, "batch_size": 32, "patience": 3},
+    "gru": {"lookback": 20, "hidden_size": 16, "epochs": 20, "batch_size": 32, "patience": 3}
+  },
+  "tuning_grid": {
+    "arima": [{"order": [1, 1, 0]}, {"order": [2, 1, 0]}],
+    "sarima": [{"order": [1, 1, 0], "seasonal_order": [1, 0, 0, 7]}, {"order": [2, 1, 0], "seasonal_order": [1, 0, 0, 7]}],
+    "ridge": [{"alpha": 0.1}, {"alpha": 1.0}, {"alpha": 10.0}],
+    "random_forest": [{"max_depth": 4}, {"max_depth": 8}],
+    "xgboost": [{"max_depth": 2, "learning_rate": 0.05}, {"max_depth": 3, "learning_rate": 0.05}]
+  }
+}

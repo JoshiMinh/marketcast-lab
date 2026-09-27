@@ -2,7 +2,7 @@
 
 Comparative time-series forecasting across cryptocurrency, equities, foreign exchange, and commodities.
 
-> **Migration status:** MarketCast Lab is being upgraded from a cryptocurrency forecasting prototype into a reproducible multi-market course project. The current application runs on the bundled crypto dataset; the leakage-safe evaluation framework, PyTorch models, and additional market adapters are planned in the [roadmap](ROADMAP.md).
+> **Migration status:** Phase 2 provides a leakage-safe BTC experiment engine with expanding-window validation, a locked holdout, statistical and lag-based ML models, and CPU PyTorch RNN/LSTM/GRU models. The old TensorFlow interface remains available only as legacy UI compatibility code. Additional market adapters belong to Phase 3.
 
 ![Current Streamlit application](preview.png)
 
@@ -100,7 +100,7 @@ marketcast-lab/
 
 The roadmap defines the target package structure. Existing entry points will remain usable during migration where practical.
 
-## Run the current prototype
+## Phase 1 setup
 
 ### 1. Create and activate an environment
 
@@ -111,9 +111,70 @@ python -m venv .venv
 
 ### 2. Install dependencies
 
+Install the tested Phase 1 package and development tools:
+
 ```powershell
-pip install -r requirements.txt
+python -m pip install -e ".[dev]"
 ```
+
+Install the optional legacy dashboard/model dependencies only when working on the old interface:
+
+```powershell
+python -m pip install -e ".[legacy]"
+```
+
+`requirements.txt` is retained temporarily for compatibility with the original prototype. `pyproject.toml` is authoritative for new development. Supported Python versions are 3.11 through 3.13.
+
+### Run the tests
+
+```powershell
+python -m pytest
+```
+
+If unrelated globally installed pytest plugins interfere, use a clean virtual environment. As a diagnostic workaround in PowerShell, run `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'` before pytest.
+
+### Run the trustworthy BTC baseline
+
+```powershell
+python main.py baseline --output artifacts/runs/btc-baseline-smoke
+```
+
+The equivalent installed command is:
+
+```powershell
+marketcast baseline --output artifacts/runs/btc-baseline-smoke
+```
+
+The run selects `crypto:BTC-USD` before splitting or feature work, reserves the final 20% as a locked test period, evaluates last-value, drift, and seven-day seasonal-naive forecasts on the validation period, and writes configuration, data quality/boundaries, environment, metrics, and timestamp-aligned predictions.
+
+### Run Phase 2 experiments
+
+The fast CPU smoke configuration covers representative statistical, scikit-learn, and all three PyTorch sequence architectures:
+
+```powershell
+python main.py experiment --config configs/smoke.json
+```
+
+The full BTC matrix adds every required baseline, Holt-Winters, ARIMA/SARIMA, XGBoost, bounded validation-only tuning, and longer neural training:
+
+```powershell
+python -m pip install -e ".[dev,boosting]"
+python main.py experiment --config configs/btc_full.json
+```
+
+Smoke runs generally finish in under 15 seconds on a modern CPU. The full configuration currently takes roughly 30–60 seconds on the development machine, but varies by hardware and numerical libraries.
+
+Each run receives a unique immutable directory under `artifacts/runs/` containing configuration, data/fold manifest, environment, fold predictions, fold and holdout metrics, residual/statistical diagnostics, tuning results where configured, saved models, failures, warnings, a comparison table, figure, and generated report.
+
+Read the comparison exclusively from saved metrics without mutating the run:
+
+```powershell
+python main.py compare --run artifacts/runs/<run_id>
+```
+
+`recursive` forecasts feed prior predictions back into later steps. `one_step_observed` refits with each newly observed test value. The strategy is stored on every prediction and metric row; do not compare rows from different strategies as if they were the same experiment.
+
+## Run the legacy prototype
 
 ### 3. Train models
 
@@ -136,6 +197,8 @@ streamlit run src/streamlit.py
 ```
 
 Model artifacts are written under `results/<optimizer>/`.
+
+The legacy training command now explicitly selects BTC before feature engineering and splitting. Its fixed holdout, ARIMA/Prophet, and TensorFlow results are still migration demonstrations—not final academic evidence.
 
 ## Target workflow
 
@@ -166,16 +229,12 @@ The dashboard will consume saved experiment artifacts instead of maintaining a s
 
 ## Roadmap
 
-Development is organized into eight phases:
+Development is organized into four agent-executable phases:
 
-1. Preserve and document the current baseline.
-2. Repair single-asset correctness and add boundary tests.
-3. Build walk-forward evaluation and reproducible artifacts.
-4. Complete statistical analysis and forecasting models.
-5. Add lag-based machine-learning models.
-6. Migrate RNN/LSTM/GRU models to PyTorch.
-7. Add equity, forex, and oil data adapters and upgrade the dashboard.
-8. Produce final experiments, report, presentation, and reproducibility audit.
+1. Establish a trustworthy, leakage-safe single-asset foundation.
+2. Build the evaluation engine and all required model families.
+3. Generalize the experiment contract to crypto, equity, forex, and oil.
+4. Deliver the artifact-driven dashboard, report, presentation, and reproducibility package.
 
 Detailed tasks, exit criteria, risks, and the definition of done are maintained in [ROADMAP.md](ROADMAP.md).
 
@@ -197,6 +256,6 @@ A project license and per-dataset source/license documentation must be added bef
 
 ## Project status
 
-**Current milestone:** Phase 1 - repair the single-asset pipeline before adding new markets.
+**Current milestone:** Phase 2 complete - the next task is Phase 3's provider adapters and four-market experiment matrix.
 
-The first trustworthy deliverable will be a reproducible BTC experiment with correct per-asset features, temporal validation, naive baselines, and saved fold predictions.
+The current trustworthy deliverable is a reproducible BTC model-family comparison using common folds and horizons, validation-only tuning, and a once-only locked holdout evaluation. See [MIGRATION.md](MIGRATION.md) for legacy components still awaiting replacement.

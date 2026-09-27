@@ -1,10 +1,60 @@
-# Python virtual environments
+# Python environments and local configuration
 .venv/
 venv/
+env/
+.env
+.env.*
+!.env.example
 
-# Byte-compiled / optimized / DLL files
+# Python caches, tests, and coverage
 __pycache__/
 *.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
 
-# Jupyter checkpoints
+# Packaging and build output
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Notebooks
 .ipynb_checkpoints/
+
+# Generated datasets and experiment output
+data/raw/
+data/interim/
+data/processed/
+artifacts/runs/
+results/
+
+# Generated model/checkpoint files
+*.ckpt
+*.joblib
+*.keras
+*.pkl
+*.pt
+*.pth
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini

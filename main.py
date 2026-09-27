@@ -6,6 +6,11 @@ import warnings
 import socket
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+SOURCE_ROOT = PROJECT_ROOT / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
@@ -144,6 +149,12 @@ def main():
     train_parser.add_argument("--optimizer", help="Sequence model optimizer: adam,rmsprop")
 
     subparsers.add_parser("ui", help="Launch Streamlit UI")
+    baseline_parser = subparsers.add_parser("baseline", help="Run the leakage-safe Phase 1 BTC baseline")
+    baseline_parser.add_argument("--output", default="artifacts/runs/btc-baseline-smoke")
+    experiment_parser = subparsers.add_parser("experiment", help="Run a Phase 2 experiment configuration")
+    experiment_parser.add_argument("--config", required=True)
+    compare_parser = subparsers.add_parser("compare", help="Regenerate a Phase 2 run comparison")
+    compare_parser.add_argument("--run", required=True)
 
     # Backward-compatible flags from older CLI versions.
     parser.add_argument("--run-pipeline", action="store_true", help=argparse.SUPPRESS)
@@ -154,6 +165,31 @@ def main():
 
     if args.command == "ui":
         _launch_streamlit_app()
+        return
+
+    if args.command == "baseline":
+        from pathlib import Path
+        from market_forecast.config import BaselineExperimentConfig
+        from market_forecast.experiments import run_btc_baseline_experiment
+
+        output = run_btc_baseline_experiment(
+            BaselineExperimentConfig(output_dir=Path(args.output))
+        )
+        print(f"Baseline artifacts written to {output}")
+        return
+
+    if args.command == "experiment":
+        from market_forecast.config import ExperimentConfig
+        from market_forecast.experiments import run_experiment
+
+        output = run_experiment(ExperimentConfig.from_json(args.config))
+        print(f"Experiment artifacts written to {output}")
+        return
+
+    if args.command == "compare":
+        from market_forecast.reports import build_comparison
+
+        print(build_comparison(args.run).to_string(index=False))
         return
 
     should_train = args.command == "train" or args.run_pipeline

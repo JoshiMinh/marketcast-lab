@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from market_forecast.features import add_past_features
+
 def load_data(path="data/crypto_statistics_data.csv"):
     """Load the main statistics dataset."""
     return pd.read_csv(path, parse_dates=["date"])
@@ -53,30 +55,13 @@ def compute_rsi(series, period=14):
 def engineer_features(df):
     if "close" not in df.columns:
         return df
-
-    close = df["close"]
-
-    for span in [7, 12, 14, 21, 26]:
-        df[f"EMA_{span}"] = ema(close, span)
-
-    for window in [10, 20, 50]:
-        df[f"MA_{window}"] = ma(close, window)
-
-    df["RSI_14"] = compute_rsi(close, period=14)
-    df["MACD"] = df["EMA_12"] - df["EMA_26"]
-    df["MACD_signal"] = ema(df["MACD"], 9)
-
-    window_bb = 20
-    df["BB_MID"] = ma(close, window_bb)
-    df["BB_STD"] = close.rolling(window=window_bb).std()
-    df["BB_UPPER"] = df["BB_MID"] + 2 * df["BB_STD"]
-    df["BB_LOWER"] = df["BB_MID"] - 2 * df["BB_STD"]
-
-    df["log_return"] = np.log(close / close.shift(1))
-    df["return"] = close.pct_change()
-    vol_window = 24
-    df["volatility"] = df["log_return"].rolling(window=vol_window).std() * np.sqrt(vol_window)
-
-    df["next_close"] = df["close"].shift(-1)
-    df["trend_up"] = (df["next_close"] > df["close"]).astype(int)
-    return df.dropna().reset_index(drop=True)
+    prepared = df.copy()
+    if "asset_id" not in prepared.columns:
+        if "crypto" not in prepared.columns:
+            raise ValueError("Feature engineering requires asset_id or crypto")
+        prepared["asset_id"] = "crypto:" + prepared["crypto"].astype(str).str.strip()
+    if "timestamp" not in prepared.columns:
+        if "date" not in prepared.columns:
+            raise ValueError("Feature engineering requires timestamp or date")
+        prepared["timestamp"] = pd.to_datetime(prepared["date"], utc=True)
+    return add_past_features(prepared).dropna(subset=["close_lag_1"]).reset_index(drop=True)

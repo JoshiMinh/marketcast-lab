@@ -339,13 +339,6 @@ def load_prepared_frame(max_points: int = DEFAULT_MAX_POINTS) -> pd.DataFrame:
     else:
         df = df.reset_index(drop=True)
 
-    df = engineer_features(df)
-    if "date" in df.columns:
-        df = df.sort_values("date").reset_index(drop=True)
-
-    if len(df) > max_points:
-        df = df.iloc[-max_points:].reset_index(drop=True)
-
     return df
 
 
@@ -383,7 +376,11 @@ def crypto_selector_options(df: pd.DataFrame) -> list[tuple[str, str]]:
 def filter_frame_by_crypto(df: pd.DataFrame, selected_crypto: str) -> pd.DataFrame:
     if "crypto" not in df.columns:
         return df
-    return df[df["crypto"] == selected_crypto].sort_values("date").reset_index(drop=True)
+    selected = df[df["crypto"] == selected_crypto].sort_values("date").reset_index(drop=True)
+    selected = engineer_features(selected)
+    if len(selected) > DEFAULT_MAX_POINTS:
+        selected = selected.iloc[-DEFAULT_MAX_POINTS:].reset_index(drop=True)
+    return selected
 
 
 def prepare_split(df: pd.DataFrame, lookback: int = DEFAULT_LOOKBACK, test_ratio: float = TEST_RATIO) -> dict[str, Any] | None:
