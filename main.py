@@ -112,7 +112,7 @@ def _prompt_optimizer_selection() -> str:
 def interactive_menu():
     try:
         while True:
-            print("\nCrypto Price Forecast")
+            print("\nMarketCast Lab")
             print("1) Train models")
             print("2) Run Streamlit")
             print("3) Exit")
@@ -136,7 +136,7 @@ def interactive_menu():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Crypto Price Forecast CLI")
+    parser = argparse.ArgumentParser(description="MarketCast Lab CLI")
     subparsers = parser.add_subparsers(dest="command")
 
     train_parser = subparsers.add_parser("train", help="Run training pipeline")

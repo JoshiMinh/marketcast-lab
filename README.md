@@ -1,6 +1,6 @@
-# ₿ Crypto Price Forecast ML
+# MarketCast Lab
 
-Lightweight ML project for cryptocurrency price forecasting with CLI and Streamlit.
+Multi-market time-series forecasting laboratory with CLI and Streamlit interfaces.
 
 ![App Preview](preview.png)
 

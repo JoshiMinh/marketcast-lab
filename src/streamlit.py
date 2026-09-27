@@ -1005,7 +1005,7 @@ def render_hero(selected_crypto: str, selected_models: list[str], forecast_days:
         f"""
         <div class="hero-shell">
             <div class="hero-kicker">Forecast Studio</div>
-            <h1 class="hero-title"><span class="btc-icon">₿</span>Crypto Price Forecast</h1>
+            <h1 class="hero-title"><span class="btc-icon">M</span>MarketCast Lab</h1>
             <p class="hero-copy">
                 Compare saved model performance on the latest backtest split, then project the next {forecast_days} days
                 for <strong>{selected_crypto}</strong>.
@@ -1064,7 +1064,7 @@ def render_forward_table(results: dict[str, dict[str, Any]]) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="₿ Crypto Forecast Studio", layout="wide")
+    st.set_page_config(page_title="MarketCast Lab", layout="wide")
     apply_app_styles()
 
     df = load_prepared_frame()
