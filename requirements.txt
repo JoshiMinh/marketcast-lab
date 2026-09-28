@@ -1,11 +1,1 @@
-jupyter
-pandas
-numpy
-matplotlib
-scikit-learn
-seaborn
-statsmodels
-plotly
-streamlit
-prophet
-tensorflow
+-e .[legacy,dashboard]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 import json
 
@@ -40,6 +40,7 @@ class ExperimentConfig:
     max_train_rows: int | None = 730
     model_params: dict[str, dict[str, object]] | None = None
     tuning_grid: dict[str, list[dict[str, object]]] | None = None
+    provider_options: dict[str, str] | None = None
 
     def to_dict(self) -> dict[str, object]:
         values = asdict(self)
@@ -57,4 +58,28 @@ class ExperimentConfig:
             if key in payload:
                 payload[key] = tuple(payload[key])
         return cls(**payload)
+
+
+@dataclass(frozen=True)
+class AssetSpec:
+    asset_id: str
+    provider: str
+    data_path: Path
+    seasonal_period: int = 5
+    provider_options: dict[str, str] = field(default_factory=dict)
+
+
+def load_assets(path: str | Path) -> tuple[AssetSpec, ...]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    assets = tuple(AssetSpec(
+        asset_id=item["asset_id"], provider=item["provider"], data_path=Path(item["data_path"]),
+        seasonal_period=int(item.get("seasonal_period", 5)),
+        provider_options=item.get("provider_options", {}),
+    ) for item in payload["assets"])
+    ids = [asset.asset_id for asset in assets]
+    if not assets or len(ids) != len(set(ids)):
+        raise ValueError("Asset catalog must contain unique asset IDs")
+    if any(":" not in asset.asset_id or asset.seasonal_period < 2 for asset in assets):
+        raise ValueError("Asset IDs need a class prefix and seasonal periods must be at least 2")
+    return assets
 

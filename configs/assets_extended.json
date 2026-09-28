@@ -1,0 +1,13 @@
+{
+  "assets": [
+    {"asset_id": "crypto:BTC-USD", "provider": "crypto_csv", "data_path": "data/crypto_statistics_data.csv", "seasonal_period": 7},
+    {"asset_id": "crypto:ETH-USD", "provider": "crypto_csv", "data_path": "data/crypto_statistics_data.csv", "seasonal_period": 7},
+    {"asset_id": "equity:SPY", "provider": "yahoo_spy", "data_path": "data/raw/spy_chart.json"},
+    {"asset_id": "equity:QQQ", "provider": "yahoo_chart", "data_path": "data/raw/qqq_chart.json", "provider_options": {"symbol": "QQQ"}},
+    {"asset_id": "forex:EUR-USD", "provider": "ecb_eurusd", "data_path": "data/raw/ecb_eurusd.csv"},
+    {"asset_id": "forex:EUR-JPY", "provider": "ecb_reference", "data_path": "data/raw/ecb_eurjpy.csv", "provider_options": {"series": "D.JPY.EUR.SP00.A", "currency": "JPY"}},
+    {"asset_id": "oil:WTI-CUSHING-SPOT", "provider": "eia_wti", "data_path": "data/raw/eia_wti.xls"},
+    {"asset_id": "gas:HENRY-HUB-SPOT", "provider": "eia_spot_xls", "data_path": "data/raw/eia_henry_hub.xls", "provider_options": {"source_url": "https://www.eia.gov/dnav/ng/hist_xls/RNGWHHDd.xls", "unit": "USD/MMBtu"}},
+    {"asset_id": "yield:US-TREASURY-10Y", "provider": "fred_csv", "data_path": "data/raw/fred_dgs10.csv", "provider_options": {"series": "DGS10", "unit": "percent"}}
+  ]
+}

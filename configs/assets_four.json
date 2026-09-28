@@ -1,0 +1,8 @@
+{
+  "assets": [
+    {"asset_id": "crypto:BTC-USD", "provider": "crypto_csv", "data_path": "data/crypto_statistics_data.csv", "seasonal_period": 7},
+    {"asset_id": "equity:SPY", "provider": "yahoo_spy", "data_path": "data/raw/spy_chart.json"},
+    {"asset_id": "forex:EUR-USD", "provider": "ecb_eurusd", "data_path": "data/raw/ecb_eurusd.csv"},
+    {"asset_id": "oil:WTI-CUSHING-SPOT", "provider": "eia_wti", "data_path": "data/raw/eia_wti.xls"}
+  ]
+}

@@ -48,7 +48,8 @@ class RunRecord:
         source = _resolve(config["data_path"])
         if not source.exists():
             raise FileNotFoundError(f"Cached source missing: {source}. Run the four-market acquisition workflow.")
-        provider = load_provider(config["provider"], source)
+        provider = load_provider(config["provider"], source, asset_id=self.asset_id,
+                                 **(config.get("provider_options") or {}))
         if provider.manifest["sha256"] != self.json("data_manifest.json")["sha256"]:
             raise ValueError(f"Source snapshot changed since run {self.run_id}; use its saved figures or regenerate the run.")
         frame = select_asset(provider.frame, self.asset_id)

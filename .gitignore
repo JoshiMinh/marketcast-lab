@@ -34,6 +34,8 @@ data/fixtures/generated/
 artifacts/runs/
 artifacts/offline-fixture/
 artifacts/offline-phase4/
+artifacts/offline-extended/
+artifacts/offline-extended-report/
 results/
 
 # Model checkpoints and local scratch output

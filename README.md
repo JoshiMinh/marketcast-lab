@@ -21,6 +21,8 @@ The bundled BTC CSV supports a quick experiment without network access:
 python main.py experiment --config configs/smoke.json
 ```
 
+An expanded catalog includes ETH, QQQ, EUR/JPY, Henry Hub natural gas and the US ten-year Treasury yield. Run it into separate artifacts with `python main.py four-markets --assets configs/assets_extended.json --output artifacts/extended`; for a network-free software check use `python main.py offline-fixture --assets configs/assets_extended.json --output artifacts/offline-extended`. Audit with `python main.py audit-four-markets --output artifacts/extended` (or the offline output). The extended report and slides are generated from that run index with `build-deliverables --index artifacts/extended --output artifacts/extended-report`. The original four-asset study remains the default and its committed results are unchanged. New provider downloads require network access and are cached under ignored `data/raw/`.
+
 For a **four-asset, fully offline software check**, generate deterministic synthetic data and its own artifacts:
 
 ```powershell

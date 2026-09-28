@@ -23,7 +23,62 @@ def _markdown_table(frame: pd.DataFrame, columns: list[str]) -> str:
     return "\n".join(rows)
 
 
+ORIGINAL_ASSETS = {"crypto:BTC-USD", "equity:SPY", "forex:EUR-USD", "oil:WTI-CUSHING-SPOT"}
+
+
+def _original_study(catalog: ArtifactCatalog) -> bool:
+    return {run.asset_id for run in catalog.runs} == ORIGINAL_ASSETS
+
+
+def _build_extended_report(catalog: ArtifactCatalog, output: Path) -> Path:
+    audit = audit_cross_market_report(catalog.root)
+    recommendations = catalog.table("recommendations.csv")
+    sources = pd.DataFrame([{
+        "asset": run.asset_id,
+        "source": run.json("data_manifest.json")["source_name"],
+        "target": run.json("data_manifest.json")["target_semantics"],
+        "unit": run.json("data_manifest.json").get("unit", "USD"),
+        "reuse": run.json("data_manifest.json")["license_redistribution_status"],
+    } for run in catalog.runs])
+    columns = ["asset_id", "horizon", "model", "rmse_mean", "rmse_std", "final_test_rmse"]
+    text = (f"# MarketCast Lab: {len(catalog.runs)} daily series\n\n"
+            f"{audit['metric_rows_reproduced']} saved metric rows reproduced from predictions. "
+            "Each asset has separate observed dates, validation folds, and a locked holdout. "
+            "Targets include adjusted prices, spot/reference values, and possibly percentage yields; "
+            "raw RMSE values across different units are not comparable.\n\n"
+            "## Sources and target semantics\n\n"
+            + _markdown_table(sources, ["asset", "source", "target", "unit", "reuse"])
+            + "\n\n## Validation selections and holdout\n\n"
+            + _markdown_table(recommendations, columns)
+            + "\n\nSelection requires at least 5% improvement over last value in both mean RMSE "
+              "and mean plus one fold standard deviation. Holdout scores are displayed after selection. "
+              "Inspect the saved manifests for exact source hashes, fold dates, and model parameters. "
+              "This is historical model evaluation, not investment advice.\n")
+    if (catalog.root / "SYNTHETIC_FIXTURE.txt").exists():
+        text = "**SYNTHETIC OFFLINE FIXTURE — SOFTWARE CHECK ONLY.**\n\n" + text
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(text, encoding="utf-8")
+    return output
+
+
+def _build_extended_presentation(catalog: ArtifactCatalog, output: Path) -> Path:
+    rows = catalog.table("recommendations.csv")
+    lines = ["# MarketCast Lab", f"{len(catalog.runs)} daily series; saved backtests.",
+             "\n---\n", "# Sources", *[f"- {run.asset_id}: {run.json('data_manifest.json')['source_name']}" for run in catalog.runs],
+             "\n---\n", "# Selected models",
+             _markdown_table(rows, ["asset_id", "horizon", "model", "rmse_mean", "final_test_rmse"]),
+             "\n---\n", "# Interpretation", "Compare models within an asset and target unit.",
+             "Holdout results follow validation-only selection. Historical analysis only."]
+    if (catalog.root / "SYNTHETIC_FIXTURE.txt").exists():
+        lines[:0] = ["# SYNTHETIC OFFLINE FIXTURE", "Software check only.", "\n---\n"]
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return output
+
+
 def build_scientific_report(catalog: ArtifactCatalog, output: Path) -> Path:
+    if not _original_study(catalog):
+        return _build_extended_report(catalog, output)
     audit = audit_cross_market_report(catalog.root)
     comparison = catalog.table("comparison.csv")
     recommendations = catalog.table("recommendations.csv").sort_values(["asset_class", "asset_id", "horizon"])
@@ -144,6 +199,8 @@ The report uses the four run IDs in `../phase3/run_index.json`. Each metric row 
 
 def build_presentation(catalog: ArtifactCatalog, output: Path) -> Path:
     """Create a concise Markdown slide deck; content comes from saved results."""
+    if not _original_study(catalog):
+        return _build_extended_presentation(catalog, output)
     recommendation = catalog.table("recommendations.csv")
     baseline = catalog.table("comparison.csv")
     source_lines = [f"- {run.asset_id}: {run.json('data_manifest.json')['source_name']}" for run in catalog.runs]
@@ -178,7 +235,47 @@ def build_presentation(catalog: ArtifactCatalog, output: Path) -> Path:
     return output
 
 
+def _build_extended_powerpoint(catalog: ArtifactCatalog, output: Path) -> Path:
+    from pptx import Presentation
+    from pptx.util import Inches, Pt
+
+    deck = Presentation()
+    deck.slide_width, deck.slide_height = Inches(13.333), Inches(7.5)
+
+    def add_slide(title: str, body: str) -> None:
+        slide = deck.slides.add_slide(deck.slide_layouts[6])
+        title_box = slide.shapes.add_textbox(Inches(.8), Inches(.5), Inches(11.8), Inches(.8))
+        title_box.text_frame.text = title
+        title_box.text_frame.paragraphs[0].font.size = Pt(30)
+        box = slide.shapes.add_textbox(Inches(.9), Inches(1.6), Inches(11.5), Inches(5.3))
+        box.text_frame.word_wrap = True
+        box.text_frame.text = body
+        for paragraph in box.text_frame.paragraphs:
+            paragraph.font.size = Pt(19)
+
+    warning = "Synthetic fixture: software check only." if (catalog.root / "SYNTHETIC_FIXTURE.txt").exists() else "Historical evaluation only."
+    add_slide("MarketCast Lab", f"{len(catalog.runs)} daily series\n{warning}")
+    for start in range(0, len(catalog.runs), 6):
+        group = catalog.runs[start:start + 6]
+        add_slide("Sources and targets", "\n".join(
+            f"{run.asset_id}: {run.json('data_manifest.json')['target_semantics']}"
+            for run in group))
+    recommendations = catalog.table("recommendations.csv")
+    for run in catalog.runs:
+        selected = recommendations[recommendations.asset_id == run.asset_id]
+        add_slide(run.asset_id, "\n".join(
+            f"Horizon {int(row.horizon)}: {row.model}; validation RMSE {row.rmse_mean:.4g}; holdout RMSE {row.final_test_rmse:.4g}"
+            for row in selected.itertuples()))
+    add_slide("Interpretation", "Compare models within each target unit. Validation selects the model; holdout tests that choice.\n"
+              "Inspect saved manifests for source hashes, calendar, and fold dates.\nHistorical analysis is not investment advice.")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    deck.save(output)
+    return output
+
+
 def build_powerpoint(catalog: ArtifactCatalog, output: Path) -> Path:
+    if not _original_study(catalog):
+        return _build_extended_powerpoint(catalog, output)
     """Create a nine-slide offline deck from the same saved comparison tables."""
     from pptx import Presentation
     from pptx.util import Inches, Pt

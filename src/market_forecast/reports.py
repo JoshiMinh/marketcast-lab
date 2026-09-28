@@ -49,7 +49,8 @@ def write_asset_eda(run_dir: str | Path, frame: pd.DataFrame, target: str, perio
     from market_forecast.analysis import series_diagnostics
     run = Path(run_dir)
     values = frame[target].astype(float)
-    returns = values.pct_change().dropna()
+    is_yield = frame.asset_class.iloc[0] == "yield"
+    returns = (values.diff() if is_yield else values.pct_change()).dropna()
     stats = series_diagnostics(values.to_numpy(), seasonal_period=period)
     with np.errstate(all="ignore"):
         return_stats = series_diagnostics(returns.to_numpy(), seasonal_period=period)
@@ -59,8 +60,8 @@ def write_asset_eda(run_dir: str | Path, frame: pd.DataFrame, target: str, perio
     stationarity = ("ADF rejects a unit root at 5%, but KPSS should also be considered."
                     if stats["adf_pvalue"] < .05 else
                     "ADF does not reject a unit root at 5%; first differencing is a reasonable ARIMA candidate.")
-    decision = (f"{stationarity} {weekly} Evaluate level prices so all models share target semantics. "
-                "Return volatility is descriptive; scaling and model transforms are fit within each training fold. "
+    decision = (f"{stationarity} {weekly} Evaluate observed target levels so all models share target semantics. "
+                "Changes are descriptive; scaling and model transforms are fit within each training fold. "
                 "The seasonal decomposition is exploratory and does not establish a stable calendar effect.")
     payload = {
         "observations": len(frame), "start": frame.timestamp.iloc[0].isoformat(),
@@ -68,18 +69,18 @@ def write_asset_eda(run_dir: str | Path, frame: pd.DataFrame, target: str, perio
         "price": stats, "returns": return_stats,
         "rolling_mean_20_latest": float(values.rolling(20).mean().iloc[-1]),
         "rolling_volatility_20_latest": float(returns.rolling(20).std().iloc[-1]),
-        "return_std": float(returns.std()),
+        "return_std": float(returns.std()), "change_kind": "percentage points" if is_yield else "fractional return",
         "seasonal_period": period,
         "decision": decision,
     }
     (run / "eda.json").write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
     (run / "eda.md").write_text(f"# {frame.asset_id.iloc[0]} EDA\n\n{decision}\n\n"
                                   f"ADF p={stats['adf_pvalue']:.4g}; KPSS p={stats['kpss_pvalue']:.4g}; "
-                                  f"return standard deviation={returns.std():.4g}. See eda.json and figures/eda.png.\n",
+                                  f"change standard deviation={returns.std():.4g}. See eda.json and figures/eda.png.\n",
                                   encoding="utf-8")
     fig, axes = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
     axes[0].plot(frame.timestamp, values); axes[0].set_ylabel(target)
-    axes[1].plot(frame.timestamp.iloc[1:], returns); axes[1].set_ylabel("Return")
+    axes[1].plot(frame.timestamp.iloc[1:], returns); axes[1].set_ylabel("Point change" if is_yield else "Return")
     axes[2].plot(frame.timestamp, values.rolling(20).mean(), label="20-observation mean")
     axes[2].plot(frame.timestamp, values.rolling(20).std(), label="20-observation std")
     axes[2].legend(); fig.tight_layout()
@@ -134,10 +135,13 @@ def write_cross_market_report(output: str | Path) -> Path:
     relative.pivot_table(index=["asset_id", "horizon"], columns="model", values="rmse_ratio").plot.bar(ax=ax)
     ax.set_ylabel("Validation RMSE / last-value RMSE"); fig.tight_layout()
     fig.savefig(destination / "relative_rmse.png", dpi=130); plt.close(fig)
-    fig, axes = plt.subplots(4, 3, figsize=(16, 13), sharex=True)
     asset_order = [entry["asset_id"] for entry in runs]
+    horizons = sorted(int(value) for value in validation.horizon.unique())
+    fig, axes = plt.subplots(len(asset_order), len(horizons),
+                             figsize=(5.3 * len(horizons), 3.2 * len(asset_order)),
+                             sharex=True, squeeze=False)
     for row_index, asset_id in enumerate(asset_order):
-        for col_index, horizon in enumerate((1, 5, 20)):
+        for col_index, horizon in enumerate(horizons):
             ax = axes[row_index, col_index]
             subset = validation[(validation.asset_id == asset_id) & (validation.horizon == horizon)]
             fold_base = subset[subset.model == "last_value"][["fold", "rmse"]]
@@ -147,13 +151,14 @@ def write_cross_market_report(output: str | Path) -> Path:
                         marker=".", alpha=.65, linewidth=.8, label=model_name)
             ax.axhline(1, color="black", linewidth=.6)
             ax.set_title(f"{asset_id}, h={horizon}")
-            ax.set_xticks([1, 2, 3])
+            ax.set_xticks(sorted(int(value) for value in subset.fold.unique()))
     handles, labels = axes[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=7, fontsize=8)
     fig.text(.01, .5, "Fold RMSE / last-value fold RMSE", rotation=90, va="center")
     fig.tight_layout(rect=[.025, .08, 1, 1])
     fig.savefig(destination / "fold_variability.png", dpi=130); plt.close(fig)
-    recommendations = summary[summary.completed_folds == 3].copy()
+    required_folds = int(json.loads((Path(runs[0]["run_dir"]) / "config.json").read_text(encoding="utf-8"))["folds"])
+    recommendations = summary[summary.completed_folds == required_folds].copy()
     recommendations["selection_score"] = recommendations.rmse_mean + recommendations.rmse_std.fillna(0)
     base_score = recommendations[recommendations.model == "last_value"][["asset_id", "horizon", "selection_score", "rmse_mean"]].rename(
         columns={"selection_score": "baseline_score", "rmse_mean": "baseline_mean"})
@@ -163,13 +168,13 @@ def write_cross_market_report(output: str | Path) -> Path:
                                    (recommendations.rmse_mean <= .95 * recommendations.baseline_mean))]
     recommendations = recommendations.sort_values("selection_score").groupby(["asset_id", "horizon"]).head(1)
     recommendations.to_csv(destination / "recommendations.csv", index=False)
-    lines = ["# Phase 3 cross-market evidence", "", "A non-baseline model is selected only if validation mean RMSE and mean plus one fold standard deviation both improve by at least 5% over last value. The locked holdout is shown only after selection.",
-             "Horizon is the next 1, 5, or 20 observed sessions, so wall-clock spans differ by market.",
-             "The 20-observation holdout and preceding three 20-observation validation blocks use identical row counts; dates are in each run manifest.",
+    lines = ["# Cross-market evidence", "", "A non-baseline model is selected only if validation mean RMSE and mean plus one fold standard deviation both improve by at least 5% over last value. The locked holdout is shown only after selection.",
+             f"Horizon is the next {', '.join(map(str, horizons))} observed sessions, so wall-clock spans differ by market.",
+             "Fold and holdout dates are in each run manifest.",
              "", "## Recommendations", "", "```text", recommendations[["asset_id", "horizon", "model", "rmse_mean", "rmse_std", "final_test_rmse"]].to_string(index=False), "```",
              "", "## Stability and failure cases", "",
              "The fold standard deviations in recommendations.csv are often large relative to mean RMSE; treat small differences as inconclusive.",
-             "Compare selected final_test_rmse with last-value holdout in comparison.csv: several validation gains reverse on the holdout, particularly longer oil and BTC forecasts.",
+             "Compare selected final_test_rmse with last-value holdout in comparison.csv; validation gains can reverse on the holdout.",
              "A 20-observation recursive forecast can compound model error; one-step results are a different strategy and are not pooled here.",
              "", "## Failures", "", f"{len(failures)} recorded run failures. See failures.csv and each run's warnings.json for convergence or storage warnings.", "", "## Traceability", "",
              "Every row in fold_metrics.csv carries run_id, config_file, manifest_file and prediction_file."]

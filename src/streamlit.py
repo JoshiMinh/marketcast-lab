@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import os
 import sys
 
@@ -39,6 +40,19 @@ def _run_caption(run: RunRecord) -> None:
                f"holdout: {manifest['final_test_start_date'][:10]} to {manifest['final_test_end_date'][:10]}")
 
 
+def _study_commands(catalog: ArtifactCatalog) -> str:
+    path = catalog.root / "study_manifest.json"
+    if path.exists():
+        study = json.loads(path.read_text(encoding="utf-8"))
+        if study.get("synthetic"):
+            return (f"python main.py offline-fixture --assets {study['assets_path']} --output {catalog.root}\n"
+                    f"python main.py audit-four-markets --output {catalog.root}")
+        return (f"python main.py four-markets --config {study['config_path']} --assets {study['assets_path']} --output {catalog.root}\n"
+                f"python main.py audit-four-markets --output {catalog.root}")
+    return ("python main.py four-markets --config configs/four_asset_full.json\n"
+            "python main.py audit-four-markets")
+
+
 def _data_explorer(catalog: ArtifactCatalog) -> None:
     st.title("Data Explorer")
     run = _asset_select(catalog)
@@ -73,8 +87,9 @@ def _time_series_analysis(catalog: ArtifactCatalog) -> None:
     a, b, c = st.columns(3)
     a.metric("ADF p-value, level", f"{eda['price']['adf_pvalue']:.3g}")
     b.metric("KPSS p-value, level", f"{eda['price']['kpss_pvalue']:.3g}")
-    c.metric("Return standard deviation", f"{eda['return_std']:.3g}")
-    st.image(str(run.directory / "figures" / "eda.png"), caption="Price, returns and rolling statistics; holdout excluded")
+    c.metric("Change standard deviation", f"{eda['return_std']:.3g}")
+    st.caption(f"Change measure: {eda.get('change_kind', 'fractional return')}")
+    st.image(str(run.directory / "figures" / "eda.png"), caption="Target level, changes and rolling statistics; holdout excluded")
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Autocorrelation")
@@ -102,8 +117,7 @@ def _experiment_setup(catalog: ArtifactCatalog) -> None:
     a.metric("Validation folds", config["folds"])
     b.metric("Horizons", ", ".join(map(str, config["horizons"])))
     c.metric("Models", len(config["models"]))
-    st.code("python main.py four-markets --config configs/four_asset_full.json\n"
-            "python main.py audit-four-markets", language="powershell")
+    st.code(_study_commands(catalog), language="powershell")
     with st.expander("Saved configuration and selected parameters"):
         st.json(config)
         st.json(manifest["selected_model_parameters"])
@@ -249,7 +263,7 @@ def main() -> None:
             st.image(str(fallback), caption="Saved demonstration figure; generate the run artifacts for interactive evidence")
         st.stop()
     if (catalog.root / "SYNTHETIC_FIXTURE.txt").exists():
-        st.warning("Synthetic offline fixture. All prices and conclusions here are software demonstration data, not market evidence.")
+        st.warning("Synthetic offline fixture. All values and conclusions here are software demonstration data, not market evidence.")
     render = {"Data Explorer": _data_explorer, "Time-Series Analysis": _time_series_analysis,
               "Experiment Setup": _experiment_setup, "Backtest Results": _backtest_results,
               "Model Comparison": _model_comparison, "Future Forecast": _future_forecast,

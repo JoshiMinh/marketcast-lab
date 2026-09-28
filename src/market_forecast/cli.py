@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     four = subparsers.add_parser("four-markets", help="Run the Phase 3 four-asset matrix")
     four.add_argument("--config", type=Path, default=Path("configs/four_asset_full.json"))
     four.add_argument("--output", type=Path, default=Path("artifacts/phase3"))
+    four.add_argument("--assets", type=Path, default=Path("configs/assets_four.json"))
     audit = subparsers.add_parser("audit-four-markets", help="Recompute saved metrics from predictions")
     audit.add_argument("--output", type=Path, default=Path("artifacts/phase3"))
     publication = subparsers.add_parser("build-deliverables", help="Build the report and slides from saved runs")
@@ -32,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     future.add_argument("--output", type=Path, default=Path("artifacts/phase4"))
     fixture = subparsers.add_parser("offline-fixture", help="Build synthetic offline four-market demo runs")
     fixture.add_argument("--output", type=Path, default=Path("artifacts/offline-fixture"))
+    fixture.add_argument("--assets", type=Path, default=Path("configs/assets_four.json"))
     return parser
 
 
@@ -48,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "compare":
         print(build_comparison(args.run).to_string(index=False))
     elif args.command == "four-markets":
-        print(f"Cross-market artifacts written to {run_four_markets(args.config, args.output)}")
+        print(f"Cross-market artifacts written to {run_four_markets(args.config, args.output, args.assets)}")
     elif args.command == "audit-four-markets":
         print(audit_cross_market_report(args.output))
     elif args.command == "build-deliverables":
@@ -62,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "offline-fixture":
         from market_forecast.experiments.offline_fixture import build_offline_fixture
 
-        print(build_offline_fixture(output=args.output))
+        print(build_offline_fixture(output=args.output, assets_path=args.assets))
     return 0
 
 

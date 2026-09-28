@@ -80,8 +80,9 @@ def validate_canonical(frame: pd.DataFrame) -> pd.DataFrame:
         raise DataValidationError(f"Duplicate asset/timestamp keys found: {examples}")
     if validated["close"].isna().any():
         raise DataValidationError("close must be numeric and non-missing")
-    if (validated[["open", "high", "low", "close"]] <= 0).any().any():
-        raise DataValidationError("Observed OHLC values must be positive")
+    price_rows = validated["asset_class"] != "yield"
+    if (validated.loc[price_rows, ["open", "high", "low", "close"]] <= 0).any().any():
+        raise DataValidationError("Observed price OHLC values must be positive")
     partial = validated[["open", "high", "low"]].isna().sum(axis=1).isin([1, 2])
     if partial.any():
         raise DataValidationError("OHLC must be complete or entirely absent for point series")
@@ -117,6 +118,11 @@ def quality_report(frame: pd.DataFrame) -> dict[str, Any]:
         intervals[str(asset_id)] = {str(k): int(v) for k, v in dates.to_series().diff().dt.days.value_counts().items()}
     invalid_high = ordered["high"] < ordered[["open", "low", "close"]].max(axis=1)
     invalid_low = ordered["low"] > ordered[["open", "high", "close"]].min(axis=1)
+    is_yield = ordered["asset_class"] == "yield"
+    price_changes = ordered.groupby("asset_id")["close"].pct_change().abs()
+    yield_changes = ordered.groupby("asset_id")["close"].diff().abs()
+    outliers = ((~is_yield & (price_changes > 0.1)) |
+                (is_yield & (yield_changes > 0.5)))
     return {
         "row_count": int(len(ordered)),
         "asset_count": int(ordered["asset_id"].nunique()),
@@ -127,10 +133,10 @@ def quality_report(frame: pd.DataFrame) -> dict[str, Any]:
         "missing_daily_timestamps_by_asset": gaps,
         "missing_weekday_timestamps_by_asset_including_holidays": weekday_gaps,
         "observation_gap_days_distribution": intervals,
-        "non_positive_ohlc_count": int((ordered[["open", "high", "low", "close"]] <= 0).sum().sum()),
+        "non_positive_ohlc_count": int((ordered.loc[~is_yield, ["open", "high", "low", "close"]] <= 0).sum().sum()),
         "inconsistent_ohlc_row_count": int((invalid_high | invalid_low).sum()),
         "provider": sorted(ordered["provider"].dropna().unique().tolist()),
-        "close_return_outlier_dates": ordered.loc[ordered.groupby("asset_id")["close"].pct_change().abs() > 0.1,
+        "close_return_outlier_dates": ordered.loc[outliers,
                                                  "timestamp"].dt.strftime("%Y-%m-%d").tolist(),
     }
 
