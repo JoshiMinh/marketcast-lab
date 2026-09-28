@@ -8,7 +8,7 @@ import pytest
 
 
 def test_dashboard_pages_render_from_saved_artifacts() -> None:
-    source_root = str(Path(__file__).resolve().parents[2] / "src")
+    source_root = str(Path(__file__).resolve().parents[2])
     sys.path = [entry for entry in sys.path if entry != source_root]
     try:
         importlib.import_module("streamlit")
@@ -18,10 +18,10 @@ def test_dashboard_pages_render_from_saved_artifacts() -> None:
         sys.path.insert(0, source_root)
     from streamlit.testing.v1 import AppTest
 
-    script = Path(__file__).resolve().parents[2] / "src" / "streamlit.py"
+    script = Path(__file__).resolve().parents[2] / "streamlit.py"
     app = AppTest.from_file(str(script), default_timeout=30).run()
     assert not app.exception
-    index = script.parents[1] / "artifacts" / "phase3" / "run_index.json"
+    index = script.parents[1] / "assets" / "phase3" / "run_index.json"
     from market_forecast.dashboard.artifacts import load_catalog
 
     try:

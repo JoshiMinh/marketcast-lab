@@ -2,7 +2,7 @@
   "provider": "crypto_csv",
   "asset_id": "crypto:BTC-USD",
   "data_path": "data/crypto_statistics_data.csv",
-  "artifacts_dir": "artifacts/runs",
+  "artifacts_dir": "assets/runs",
   "end_date": "2025-10-14",
   "models": ["last_value", "drift", "seasonal_naive", "exponential_smoothing", "holt_winters", "arima", "sarima", "ridge", "lasso", "random_forest", "xgboost", "rnn", "lstm", "gru"],
   "horizons": [1, 5, 20],

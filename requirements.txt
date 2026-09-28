@@ -1,1 +1,1 @@
--e .[legacy,dashboard]
+-e .[dev,boosting,dashboard,presentation]

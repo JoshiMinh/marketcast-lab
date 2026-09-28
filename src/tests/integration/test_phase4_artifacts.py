@@ -9,8 +9,8 @@ from market_forecast.publication import build_scientific_report
 from market_forecast.reports import audit_cross_market_report
 
 
-ROOT = Path(__file__).resolve().parents[2]
-INDEX = ROOT / "artifacts" / "phase3" / "run_index.json"
+ROOT = Path(__file__).resolve().parents[3]
+INDEX = ROOT / "assets" / "phase3" / "run_index.json"
 
 
 def test_missing_artifact_index_is_explicit(tmp_path: Path) -> None:

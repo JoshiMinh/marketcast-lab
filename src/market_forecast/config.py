@@ -9,7 +9,7 @@ import json
 class BaselineExperimentConfig:
     data_path: Path = Path("data/crypto_statistics_data.csv")
     asset_id: str = "crypto:BTC-USD"
-    output_dir: Path = Path("artifacts/runs/btc-baseline-smoke")
+    output_dir: Path = Path("assets/runs/btc-baseline-smoke")
     validation_fraction: float = 0.2
     test_fraction: float = 0.2
     seasonal_period: int | None = 7
@@ -27,7 +27,7 @@ class ExperimentConfig:
     data_path: Path = Path("data/crypto_statistics_data.csv")
     provider: str = "crypto_csv"
     end_date: str | None = None
-    artifacts_dir: Path = Path("artifacts/runs")
+    artifacts_dir: Path = Path("assets/runs")
     asset_id: str = "crypto:BTC-USD"
     models: tuple[str, ...] = ("last_value", "drift", "seasonal_naive")
     horizons: tuple[int, ...] = (1, 5, 20)

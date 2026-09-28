@@ -1,6 +1,6 @@
 {
   "asset_id": "crypto:BTC-USD",
-  "artifacts_dir": "artifacts/runs",
+  "artifacts_dir": "assets/runs",
   "models": ["last_value", "drift", "seasonal_naive", "exponential_smoothing", "holt_winters", "arima", "sarima", "ridge", "random_forest", "xgboost", "rnn", "lstm", "gru"],
   "horizons": [1, 5, 20],
   "folds": 3,

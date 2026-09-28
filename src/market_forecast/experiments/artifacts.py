@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import platform
@@ -10,15 +12,36 @@ import subprocess
 import pandas as pd
 
 
-def create_run_directory(root: Path, config: dict[str, object]) -> Path:
+def _run_name(config: dict[str, object]) -> str:
     encoded = json.dumps(config, sort_keys=True).encode("utf-8")
     digest = hashlib.sha256(encoded).hexdigest()[:8]
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    path = root / f"{timestamp}-{digest}"
+    return f"{timestamp}-{digest}"
+
+
+def create_run_directory(root: Path, config: dict[str, object]) -> Path:
+    path = root / _run_name(config)
     path.mkdir(parents=True, exist_ok=False)
     (path / "model").mkdir()
     (path / "figures").mkdir()
     return path
+
+
+@contextmanager
+def staged_run_directory(root: Path, config: dict[str, object]):
+    """Publish a run only after every artifact and model has been written."""
+    name = _run_name(config)
+    final = root / name
+    staging = root / f".{name}.incomplete"
+    staging.mkdir(parents=True, exist_ok=False)
+    (staging / "model").mkdir()
+    (staging / "figures").mkdir()
+    try:
+        yield staging, final
+        staging.rename(final)
+    except BaseException:
+        shutil.rmtree(staging)
+        raise
 
 
 def write_json(path: Path, payload: object) -> None:

@@ -73,7 +73,7 @@ class ArtifactCatalog:
         return next(record for record in self.runs if record.asset_id == asset_id)
 
 
-def load_catalog(root: str | Path = "artifacts/phase3") -> ArtifactCatalog:
+def load_catalog(root: str | Path = "assets/phase3") -> ArtifactCatalog:
     directory = _resolve(root)
     index = _json(directory / "run_index.json")
     records = tuple(RunRecord(entry["run_id"], entry["asset_id"], entry["asset_class"],

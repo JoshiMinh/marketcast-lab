@@ -26,7 +26,7 @@ PAGES = ("Data Explorer", "Time-Series Analysis", "Experiment Setup", "Backtest 
 
 @st.cache_data(show_spinner=False)
 def _catalog() -> ArtifactCatalog:
-    return load_catalog(os.environ.get("MARKETCAST_ARTIFACT_ROOT", str(PROJECT_ROOT / "artifacts" / "phase3")))
+    return load_catalog(os.environ.get("MARKETCAST_ARTIFACT_ROOT", str(PROJECT_ROOT / "assets" / "phase3")))
 
 
 def _asset_select(catalog: ArtifactCatalog, label: str = "Asset") -> RunRecord:
@@ -212,7 +212,7 @@ def _model_comparison(catalog: ArtifactCatalog) -> None:
 def _future_forecast(catalog: ArtifactCatalog) -> None:
     st.title("Future Forecast")
     st.warning("Speculative scenario from a saved historical origin. These values are separate from backtest and holdout scores.")
-    path = Path(os.environ.get("MARKETCAST_PHASE4_ROOT", str(PROJECT_ROOT / "artifacts" / "phase4"))) / "future_forecasts.csv"
+    path = Path(os.environ.get("MARKETCAST_PHASE4_ROOT", str(PROJECT_ROOT / "assets" / "phase4"))) / "future_forecasts.csv"
     if not path.exists():
         st.info("No scenario has been generated. Run `python main.py build-future-scenarios` explicitly, then refresh this page.")
         return
@@ -258,7 +258,7 @@ def main() -> None:
         st.error(str(exc))
         st.code("python main.py four-markets --config configs/four_asset_full.json\n"
                 "python main.py audit-four-markets", language="powershell")
-        fallback = PROJECT_ROOT / "docs" / "demo" / "relative_rmse.png"
+        fallback = PROJECT_ROOT / "images" / "relative_rmse.png"
         if fallback.exists():
             st.image(str(fallback), caption="Saved demonstration figure; generate the run artifacts for interactive evidence")
         st.stop()
