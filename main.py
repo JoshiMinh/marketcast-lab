@@ -155,6 +155,19 @@ def main():
     experiment_parser.add_argument("--config", required=True)
     compare_parser = subparsers.add_parser("compare", help="Regenerate a Phase 2 run comparison")
     compare_parser.add_argument("--run", required=True)
+    four_parser = subparsers.add_parser("four-markets", help="Run the Phase 3 four-asset matrix")
+    four_parser.add_argument("--config", default="configs/four_asset_full.json")
+    four_parser.add_argument("--output", default="artifacts/phase3")
+    audit_parser = subparsers.add_parser("audit-four-markets", help="Recompute Phase 3 metrics from predictions")
+    audit_parser.add_argument("--output", default="artifacts/phase3")
+    report_parser = subparsers.add_parser("build-deliverables", help="Build Phase 4 report and presentation from runs")
+    report_parser.add_argument("--index", default="artifacts/phase3")
+    report_parser.add_argument("--output", default="artifacts/phase4")
+    future_parser = subparsers.add_parser("build-future-scenarios", help="Explicitly fit scenario forecasts for the UI")
+    future_parser.add_argument("--index", default="artifacts/phase3")
+    future_parser.add_argument("--output", default="artifacts/phase4")
+    fixture_parser = subparsers.add_parser("offline-fixture", help="Build deterministic synthetic four-market demo runs")
+    fixture_parser.add_argument("--output", default="artifacts/offline-fixture")
 
     # Backward-compatible flags from older CLI versions.
     parser.add_argument("--run-pipeline", action="store_true", help=argparse.SUPPRESS)
@@ -190,6 +203,36 @@ def main():
         from market_forecast.reports import build_comparison
 
         print(build_comparison(args.run).to_string(index=False))
+        return
+
+    if args.command == "four-markets":
+        from market_forecast.experiments.four_markets import run_four_markets
+
+        print(f"Cross-market artifacts written to {run_four_markets(args.config, args.output)}")
+        return
+
+    if args.command == "audit-four-markets":
+        from market_forecast.reports import audit_cross_market_report
+
+        print(audit_cross_market_report(args.output))
+        return
+
+    if args.command == "build-deliverables":
+        from market_forecast.publication import build_deliverables
+
+        print(f"Report and presentation written to {build_deliverables(args.index, args.output)}")
+        return
+
+    if args.command == "build-future-scenarios":
+        from market_forecast.publication import build_future_scenarios
+
+        print(f"Scenario forecasts written to {build_future_scenarios(args.index, args.output)}")
+        return
+
+    if args.command == "offline-fixture":
+        from market_forecast.experiments.offline_fixture import build_offline_fixture
+
+        print(f"Synthetic fixture artifacts written to {build_offline_fixture(output=args.output)}")
         return
 
     should_train = args.command == "train" or args.run_pipeline

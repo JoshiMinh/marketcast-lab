@@ -25,6 +25,8 @@ class BaselineExperimentConfig:
 @dataclass(frozen=True)
 class ExperimentConfig:
     data_path: Path = Path("data/crypto_statistics_data.csv")
+    provider: str = "crypto_csv"
+    end_date: str | None = None
     artifacts_dir: Path = Path("artifacts/runs")
     asset_id: str = "crypto:BTC-USD"
     models: tuple[str, ...] = ("last_value", "drift", "seasonal_naive")

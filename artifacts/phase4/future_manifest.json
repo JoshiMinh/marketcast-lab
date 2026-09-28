@@ -1,0 +1,7 @@
+{
+  "generated_at": "2026-09-28T05:46:21.895269+00:00",
+  "source_index": "C:\\Users\\binha\\Projects\\marketcast-lab\\artifacts\\phase3\\run_index.json",
+  "method": "explicit refit on each asset's 180 observations through the saved cutoff; recursive scenario",
+  "calendar_dates": "omitted; steps count observations without invented future holidays",
+  "purpose": "speculative educational scenario, separate from historical backtest"
+}

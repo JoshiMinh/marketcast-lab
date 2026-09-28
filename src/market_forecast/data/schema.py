@@ -78,10 +78,13 @@ def validate_canonical(frame: pd.DataFrame) -> pd.DataFrame:
     if duplicate_mask.any():
         examples = validated.loc[duplicate_mask, list(KEY_COLUMNS)].head(5).to_dict("records")
         raise DataValidationError(f"Duplicate asset/timestamp keys found: {examples}")
-    if validated[["open", "high", "low", "close"]].isna().any().any():
-        raise DataValidationError("OHLC values must be numeric and non-missing")
+    if validated["close"].isna().any():
+        raise DataValidationError("close must be numeric and non-missing")
     if (validated[["open", "high", "low", "close"]] <= 0).any().any():
-        raise DataValidationError("OHLC values must be positive")
+        raise DataValidationError("Observed OHLC values must be positive")
+    partial = validated[["open", "high", "low"]].isna().sum(axis=1).isin([1, 2])
+    if partial.any():
+        raise DataValidationError("OHLC must be complete or entirely absent for point series")
     return validated.sort_values(list(KEY_COLUMNS), kind="stable").reset_index(drop=True)
 
 
@@ -104,10 +107,14 @@ def select_asset(frame: pd.DataFrame, asset_id: str) -> pd.DataFrame:
 def quality_report(frame: pd.DataFrame) -> dict[str, Any]:
     ordered = frame.sort_values(["asset_id", "timestamp"])
     gaps: dict[str, int] = {}
+    weekday_gaps: dict[str, int] = {}
+    intervals: dict[str, dict[str, int]] = {}
     for asset_id, group in ordered.groupby("asset_id", sort=True):
         dates = pd.DatetimeIndex(group["timestamp"])
         expected = pd.date_range(dates.min(), dates.max(), freq="D", tz="UTC")
         gaps[str(asset_id)] = int(len(expected.difference(dates)))
+        weekday_gaps[str(asset_id)] = int(len(pd.bdate_range(dates.min(), dates.max(), tz="UTC").difference(dates)))
+        intervals[str(asset_id)] = {str(k): int(v) for k, v in dates.to_series().diff().dt.days.value_counts().items()}
     invalid_high = ordered["high"] < ordered[["open", "low", "close"]].max(axis=1)
     invalid_low = ordered["low"] > ordered[["open", "high", "close"]].min(axis=1)
     return {
@@ -118,8 +125,12 @@ def quality_report(frame: pd.DataFrame) -> dict[str, Any]:
         "duplicate_key_count": int(ordered.duplicated(list(KEY_COLUMNS)).sum()),
         "missing_values": {key: int(value) for key, value in ordered.isna().sum().items()},
         "missing_daily_timestamps_by_asset": gaps,
+        "missing_weekday_timestamps_by_asset_including_holidays": weekday_gaps,
+        "observation_gap_days_distribution": intervals,
         "non_positive_ohlc_count": int((ordered[["open", "high", "low", "close"]] <= 0).sum().sum()),
         "inconsistent_ohlc_row_count": int((invalid_high | invalid_low).sum()),
         "provider": sorted(ordered["provider"].dropna().unique().tolist()),
+        "close_return_outlier_dates": ordered.loc[ordered.groupby("asset_id")["close"].pct_change().abs() > 0.1,
+                                                 "timestamp"].dt.strftime("%Y-%m-%d").tolist(),
     }
 

@@ -8,7 +8,7 @@ def test_registry_creates_every_required_model_adapter() -> None:
     registry = default_registry()
     expected = {
         "last_value", "drift", "seasonal_naive", "exponential_smoothing", "holt_winters",
-        "arima", "sarima", "ridge", "random_forest", "xgboost", "rnn", "lstm", "gru",
+        "arima", "sarima", "ridge", "lasso", "random_forest", "xgboost", "rnn", "lstm", "gru",
     }
     assert expected == set(registry.names())
     assert isinstance(registry.create("ridge", {"lookback": 2}), ForecastModel)

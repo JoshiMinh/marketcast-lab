@@ -1,261 +1,76 @@
 # MarketCast Lab
 
-Comparative time-series forecasting across cryptocurrency, equities, foreign exchange, and commodities.
+MarketCast Lab compares daily price forecasts for BTC/USD, SPY, EUR/USD, and WTI Cushing spot oil. A shared experiment engine evaluates 14 model families at 1, 5, and 20 **observed-session** horizons with three expanding validation folds and a separate final holdout. The Streamlit dashboard, comparison tables, report, and slides consume saved experiment artifacts. They do not train while rendering.
 
-> **Migration status:** Phase 2 provides a leakage-safe BTC experiment engine with expanding-window validation, a locked holdout, statistical and lag-based ML models, and CPU PyTorch RNN/LSTM/GRU models. The old TensorFlow interface remains available only as legacy UI compatibility code. Additional market adapters belong to Phase 3.
+This is a course research project. Its forecasts are educational and are not financial advice.
 
-![Current Streamlit application](preview.png)
+## Start from a clean clone
 
-## Purpose
-
-MarketCast Lab is an academic forecasting laboratory for answering a practical question:
-
-> How do statistical, machine-learning, and deep-learning forecasting methods compare across markets with different trends, seasonal patterns, volatility, and trading calendars?
-
-The finished system will provide one consistent workflow for:
-
-1. Importing and validating market time series.
-2. Exploring trend, seasonality, stationarity, autocorrelation, and volatility.
-3. Applying leakage-safe transformations and lag/rolling features.
-4. Training statistical, machine-learning, and PyTorch sequence models.
-5. Evaluating multiple forecast horizons with walk-forward validation.
-6. Comparing results by asset, model, horizon, error, stability, and runtime.
-7. Presenting reproducible experiments through reports and a Streamlit dashboard.
-
-This is an educational analysis tool, not financial advice or an automated trading system.
-
-## Course coverage
-
-The target implementation is designed for the Time Series Data Analysis course (`AI2029`) and covers:
-
-- Time-series visualization, cleaning, scaling, log/Box-Cox transformation, smoothing, and differencing.
-- Trend and seasonal decomposition, ACF/PACF, ADF/KPSS testing, and residual diagnostics.
-- Naive baselines, exponential smoothing, Holt-Winters, ARIMA, and SARIMA.
-- Lag-feature Ridge/Lasso, Random Forest, and XGBoost or LightGBM models.
-- RNN, LSTM, and GRU models implemented in PyTorch.
-- `TimeSeriesSplit` or explicit walk-forward validation.
-- MAE, MSE, RMSE, MAPE/sMAPE, MASE, AIC/BIC, runtime, and interval diagnostics where applicable.
-- Evidence-based comparison, interpretation, limitations, and final model selection.
-
-See [ROADMAP.md](ROADMAP.md) for the complete course-to-deliverable mapping and implementation plan.
-
-## Planned market scope
-
-The minimum final comparison uses daily data for one representative instrument per asset class:
-
-| Asset class | Initial candidate | Key consideration |
-| --- | --- | --- |
-| Cryptocurrency | BTC/USD | Continuous 7-day market |
-| Equity | SPY or AAPL | Exchange calendar and adjusted prices |
-| Foreign exchange | EUR/USD | Approximately 24/5 trading |
-| Commodity | Crude oil | Contract-roll or benchmark methodology |
-
-Daily frequency keeps the cross-market comparison manageable and defensible. More assets and intraday frequencies are extensions, not initial requirements.
-
-## Current prototype
-
-The repository currently provides:
-
-- A historical cryptocurrency CSV dataset.
-- EMA, moving average, RSI, MACD, Bollinger Band, return, and volatility features.
-- ARIMA and optional Prophet forecasts.
-- TensorFlow/Keras LSTM and GRU prototypes.
-- A simple mean ensemble.
-- A CLI training workflow.
-- A Streamlit dashboard with historical charts, backtest metrics, and forward projections.
-- RMSE, MAE, and MAPE reporting.
-
-### Important current limitations
-
-The prototype is not yet the final course implementation:
-
-- The CLI can mix rows from different crypto assets into one apparent series.
-- Technical indicators are computed before grouping by asset.
-- The dashboard truncates the combined dataset before asset selection.
-- Evaluation uses one fixed holdout instead of walk-forward validation.
-- It lacks required statistical analysis, classical baselines, lag-based ML models, and residual diagnostics.
-- Sequence models use TensorFlow rather than the course-aligned PyTorch implementation.
-- Model configuration, run metadata, tests, and data provenance are incomplete.
-
-Until Phase 1 and Phase 2 of the roadmap are complete, generated forecasts should be treated as interface demonstrations rather than reliable experimental results.
-
-## Current project structure
-
-```text
-marketcast-lab/
-├── data/
-│   └── crypto_statistics_data.csv
-├── results/
-├── src/
-│   ├── data.py
-│   ├── models.py
-│   ├── train.py
-│   └── streamlit.py
-├── main.py
-├── marketcast_lab.ipynb
-├── requirements.txt
-├── README.md
-└── ROADMAP.md
-```
-
-The roadmap defines the target package structure. Existing entry points will remain usable during migration where practical.
-
-## Phase 1 setup
-
-### 1. Create and activate an environment
+Use Python 3.11–3.13. In PowerShell, from the repository root:
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev,boosting,dashboard,presentation]"
+python -m pytest -q
 ```
 
-### 2. Install dependencies
-
-Install the tested Phase 1 package and development tools:
-
-```powershell
-python -m pip install -e ".[dev]"
-```
-
-Install the optional legacy dashboard/model dependencies only when working on the old interface:
-
-```powershell
-python -m pip install -e ".[legacy]"
-```
-
-`requirements.txt` is retained temporarily for compatibility with the original prototype. `pyproject.toml` is authoritative for new development. Supported Python versions are 3.11 through 3.13.
-
-### Run the tests
-
-```powershell
-python -m pytest
-```
-
-If unrelated globally installed pytest plugins interfere, use a clean virtual environment. As a diagnostic workaround in PowerShell, run `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'` before pytest.
-
-### Run the trustworthy BTC baseline
-
-```powershell
-python main.py baseline --output artifacts/runs/btc-baseline-smoke
-```
-
-The equivalent installed command is:
-
-```powershell
-marketcast baseline --output artifacts/runs/btc-baseline-smoke
-```
-
-The run selects `crypto:BTC-USD` before splitting or feature work, reserves the final 20% as a locked test period, evaluates last-value, drift, and seven-day seasonal-naive forecasts on the validation period, and writes configuration, data quality/boundaries, environment, metrics, and timestamp-aligned predictions.
-
-### Run Phase 2 experiments
-
-The fast CPU smoke configuration covers representative statistical, scikit-learn, and all three PyTorch sequence architectures:
+The bundled BTC CSV supports a quick experiment without network access:
 
 ```powershell
 python main.py experiment --config configs/smoke.json
 ```
 
-The full BTC matrix adds every required baseline, Holt-Winters, ARIMA/SARIMA, XGBoost, bounded validation-only tuning, and longer neural training:
+For a **four-asset, fully offline software check**, generate deterministic synthetic data and its own artifacts:
 
 ```powershell
-python -m pip install -e ".[dev,boosting]"
-python main.py experiment --config configs/btc_full.json
+python main.py offline-fixture
+python main.py audit-four-markets --output artifacts/offline-fixture
+python main.py build-deliverables --index artifacts/offline-fixture --output artifacts/offline-phase4
+$env:MARKETCAST_ARTIFACT_ROOT='artifacts/offline-fixture'
+$env:MARKETCAST_PHASE4_ROOT='artifacts/offline-phase4'
+python -m streamlit run src/streamlit.py
 ```
 
-Smoke runs generally finish in under 15 seconds on a modern CPU. The full configuration currently takes roughly 30–60 seconds on the development machine, but varies by hardware and numerical libraries.
+The dashboard labels these outputs as synthetic. They check the software path; they provide no evidence about real market performance. In a new PowerShell session, the dashboard uses the real artifact paths again.
 
-Each run receives a unique immutable directory under `artifacts/runs/` containing configuration, data/fold manifest, environment, fold predictions, fold and holdout metrics, residual/statistical diagnostics, tuning results where configured, saved models, failures, warnings, a comparison table, figure, and generated report.
+## Reproduce the four-market study
 
-Read the comparison exclusively from saved metrics without mutating the run:
+The first command retrieves SPY from Yahoo Finance, EUR/USD from the ECB, and WTI spot from the EIA; it caches source snapshots under ignored `data/raw/`. The bundled CSV supplies BTC. Network access and provider availability are needed for first acquisition.
 
 ```powershell
-python main.py compare --run artifacts/runs/<run_id>
+python main.py four-markets --config configs/four_asset_full.json
+python main.py audit-four-markets
+python main.py build-deliverables
+python main.py build-future-scenarios
+python -m streamlit run src/streamlit.py
 ```
 
-`recursive` forecasts feed prior predictions back into later steps. `one_step_observed` refits with each newly observed test value. The strategy is stored on every prediction and metric row; do not compare rows from different strategies as if they were the same experiment.
+`audit-four-markets` recomputes saved MAE and RMSE from fold prediction files. The four-market configuration runs 14 families for each asset at horizons 1, 5, and 20: last value, drift, seasonal naive, exponential smoothing, Holt-Winters, ARIMA, SARIMA, Ridge, Lasso, Random Forest, XGBoost, RNN, LSTM, and GRU. A model failure or warning is recorded in the run rather than silently removed. See [configuration and runtime notes](docs/CONFIGURATION.md).
 
-## Run the legacy prototype
+Generated run directories, provider downloads, and checkpoints are intentionally ignored by Git. The committed [Phase 3 comparison snapshot](artifacts/phase3/analysis.md), [scientific report](artifacts/phase4/scientific_report.md), and [presentation](artifacts/phase4/presentation.pptx) show the completed local study; **reproduce the commands above to obtain the immutable run files needed to audit or explore those numbers interactively**. Each run includes its config, source hash and manifest, quality report, diagnostics, metrics, and fold predictions. A newly generated run has a new ID and can differ when a provider revises historical data. The dashboard shows an acquisition message if the referenced run files are absent.
 
-### 3. Train models
+## Navigate the results
 
-Interactive CLI:
+The dashboard has Data Explorer, Time-Series Analysis, Experiment Setup, Backtest Results, Model Comparison, Future Forecast, and Experiment History pages. Backtest plots show saved actual and predicted values by fold. Comparison views expose validation mean and spread, final holdout, runtime, residual diagnostics, and available interval coverage. Future Forecast reads a separately generated scenario file; it is visibly distinct from backtests and does not imply known future market holidays. The saved scenario's origin is the study cutoff, 2025-10-14, so it is a historical-origin demonstration rather than a current-market quote.
 
-```powershell
-python main.py
-```
+The target is adjusted close for SPY and source close/reference value for the other assets. Only dates observed by each provider enter the series; exchange holidays and weekends are never manufactured as ordinary rows. WTI is an EIA **spot** benchmark, so no futures roll is involved. See [methods and limitations](PHASE3.md), the [data dictionary](docs/DATA_DICTIONARY.md), and the [source/license register](docs/SOURCES.md). SPY raw-feed redistribution rights and the bundled BTC CSV's original license are unverified, so raw SPY downloads are not committed and BTC provenance remains a limitation.
 
-Non-interactive example:
+## Assessment and demo
 
-```powershell
-python main.py train --models all --optimizer adam
-```
+- [Scientific report](artifacts/phase4/scientific_report.md) and [Markdown slides](artifacts/phase4/presentation.md), both generated from saved artifacts
+- [Deterministic demo and fallback figures](docs/DEMO.md)
+- [Data dictionary](docs/DATA_DICTIONARY.md), [source/license register](docs/SOURCES.md), and [configuration reference](docs/CONFIGURATION.md)
+- [Phase 4 evidence checklist](PHASE4_GAPS.md) and [assessment rubric map](docs/RUBRIC.md)
 
-### 4. Launch the dashboard
+The development-machine four-market run took roughly 18 seconds on Windows/Python 3.13/CPU after dependencies were installed; PyTorch installation can take considerably longer. The last local audit reproduced 672 metric rows from fold predictions, with zero model failures and one recorded FX convergence warning. These counts describe the saved study, not a guarantee for a new provider snapshot.
 
-```powershell
-streamlit run src/streamlit.py
-```
+## Troubleshooting
 
-Model artifacts are written under `results/<optimizer>/`.
+- **No dashboard runs:** run the four-market and audit commands above, or use the offline fixture. The committed report alone does not contain the full prediction files.
+- **Provider download fails:** retry the command. Cached snapshots in `data/raw/` are reused; for a network-free demonstration, use the synthetic fixture.
+- **Parquet unavailable:** predictions fall back to CSV, and the run records that warning. The audit reads either format.
+- **Global pytest plugin interferes:** use the clean virtual environment. If needed, set `$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'` before running pytest.
+- **Dashboard dependency missing:** install the `dashboard` extra in the setup command. Legacy TensorFlow/Prophet code in `src/models.py` and `src/train.py` is excluded from the four-market results; `python main.py train` does not reproduce this study.
 
-The legacy training command now explicitly selects BTC before feature engineering and splitting. Its fixed holdout, ARIMA/Prophet, and TensorFlow results are still migration demonstrations—not final academic evidence.
-
-## Target workflow
-
-The upgraded system will separate experimentation from presentation:
-
-```text
-provider data
-  -> canonical per-asset schema
-  -> validation and preprocessing
-  -> exploratory/statistical analysis
-  -> leakage-safe features and temporal folds
-  -> model training and forecasting
-  -> immutable run artifacts
-  -> comparison report and Streamlit dashboard
-```
-
-The dashboard will consume saved experiment artifacts instead of maintaining a second training implementation.
-
-## Reproducibility principles
-
-- Preserve temporal order and market-specific calendars.
-- Fit every transformation only on the relevant training fold.
-- Never calculate lags or rolling features across asset boundaries.
-- Keep the final test period isolated from tuning and model selection.
-- Record data source, date range, features, parameters, seeds, folds, software versions, and code revision.
-- Compare all models on the same assets, folds, horizons, and metrics.
-- Include naive baselines; a complex model is useful only when it beats a simple alternative consistently.
-
-## Roadmap
-
-Development is organized into four agent-executable phases:
-
-1. Establish a trustworthy, leakage-safe single-asset foundation.
-2. Build the evaluation engine and all required model families.
-3. Generalize the experiment contract to crypto, equity, forex, and oil.
-4. Deliver the artifact-driven dashboard, report, presentation, and reproducibility package.
-
-Detailed tasks, exit criteria, risks, and the definition of done are maintained in [ROADMAP.md](ROADMAP.md).
-
-## Expected final deliverables
-
-- Reusable Python package and command-line interface.
-- Streamlit analysis and comparison dashboard.
-- Versioned experiment configurations and result artifacts.
-- Data audit and exploratory-analysis notebook.
-- Statistical, ML, and deep-learning experiment notebooks or generated reports.
-- Automated unit, integration, leakage, and regression tests.
-- Cross-market results tables and figures.
-- Scientific final report and presentation materials.
-- Reproduction instructions for a clean environment.
-
-## License and data
-
-A project license and per-dataset source/license documentation must be added before redistribution. Raw market data should not be committed unless its license permits redistribution; otherwise, provide retrieval scripts and data manifests.
-
-## Project status
-
-**Current milestone:** Phase 2 complete - the next task is Phase 3's provider adapters and four-market experiment matrix.
-
-The current trustworthy deliverable is a reproducible BTC model-family comparison using common folds and horizons, validation-only tuning, and a once-only locked holdout evaluation. See [MIGRATION.md](MIGRATION.md) for legacy components still awaiting replacement.
+GitHub Actions are disabled for this repository. Reproduction uses the local commands above.

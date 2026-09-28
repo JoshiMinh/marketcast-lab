@@ -1,0 +1,30 @@
+[
+  {
+    "asset_id": "crypto:BTC-USD",
+    "asset_class": "crypto",
+    "run_id": "20260928T054600014613Z-2646b062",
+    "run_dir": "artifacts\\runs\\20260928T054600014613Z-2646b062",
+    "wall_seconds": 5.073586999999861
+  },
+  {
+    "asset_id": "equity:SPY",
+    "asset_class": "equity",
+    "run_id": "20260928T054602477182Z-e456fc7a",
+    "run_dir": "artifacts\\runs\\20260928T054602477182Z-e456fc7a",
+    "wall_seconds": 2.3482788000001165
+  },
+  {
+    "asset_id": "forex:EUR-USD",
+    "asset_class": "forex",
+    "run_id": "20260928T054604900545Z-5e05e298",
+    "run_dir": "artifacts\\runs\\20260928T054604900545Z-5e05e298",
+    "wall_seconds": 2.419832900000074
+  },
+  {
+    "asset_id": "oil:WTI-CUSHING-SPOT",
+    "asset_class": "oil",
+    "run_id": "20260928T054607431058Z-28fa2e2c",
+    "run_dir": "artifacts\\runs\\20260928T054607431058Z-28fa2e2c",
+    "wall_seconds": 2.528636500000175
+  }
+]

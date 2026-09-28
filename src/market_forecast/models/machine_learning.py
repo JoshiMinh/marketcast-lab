@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, Lasso
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
@@ -27,9 +27,10 @@ class LagRegressor(ForecastModel):
 
     def _estimator(self):
         columns = list(range(self.lookback))
-        if self.kind == "ridge":
+        if self.kind in {"ridge", "lasso"}:
             preprocessing = ColumnTransformer([("lags", StandardScaler(), columns)])
-            estimator = Ridge(alpha=float(self.params.get("alpha", 1.0)))
+            estimator = (Ridge(alpha=float(self.params.get("alpha", 1.0))) if self.kind == "ridge"
+                         else Lasso(alpha=float(self.params.get("alpha", 0.01)), max_iter=10000, random_state=self.seed))
             return Pipeline([("preprocess", preprocessing), ("model", estimator)])
         if self.kind == "random_forest":
             estimator = RandomForestRegressor(

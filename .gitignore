@@ -1,12 +1,13 @@
-# Python environments and local configuration
+# Local environments and credentials
 .venv/
 venv/
 env/
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
 
-# Python caches, tests, and coverage
+# Python, testing, and packaging output
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,39 +19,37 @@ __pycache__/
 .coverage
 .coverage.*
 htmlcov/
-
-# Packaging and build output
 build/
 dist/
 *.egg-info/
 .eggs/
-
-# Notebooks
 .ipynb_checkpoints/
 
-# Generated datasets and experiment output
+# Provider snapshots, normalized data, and generated experiment runs
+# Keep the bundled BTC CSV and curated phase3/phase4 report snapshots tracked.
 data/raw/
 data/interim/
 data/processed/
+data/fixtures/generated/
 artifacts/runs/
+artifacts/offline-fixture/
+artifacts/offline-phase4/
 results/
 
-# Generated model/checkpoint files
+# Model checkpoints and local scratch output
 *.ckpt
 *.joblib
 *.keras
 *.pkl
 *.pt
 *.pth
-
-# Logs and temporary files
 *.log
 *.tmp
 *.temp
 tmp/
 temp/
 
-# Editors and operating systems
+# Editor and operating-system files
 .idea/
 .vscode/
 *.swp

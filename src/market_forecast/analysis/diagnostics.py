@@ -27,14 +27,14 @@ def residual_diagnostics(residuals: np.ndarray, lags: int = 10) -> dict[str, obj
     }
 
 
-def series_diagnostics(values: np.ndarray, lags: int = 20) -> dict[str, object]:
+def series_diagnostics(values: np.ndarray, lags: int = 20, seasonal_period: int = 7) -> dict[str, object]:
     array = np.asarray(values, dtype=float).reshape(-1)
     usable = min(lags, len(array) // 2 - 1)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         adf = adfuller(array, autolag="AIC", result_object=True)
         kpss_result = kpss(array, regression="c", nlags="auto", result_object=True)
-    decomposition = seasonal_decompose(array, model="additive", period=7, extrapolate_trend="period")
+    decomposition = seasonal_decompose(array, model="additive", period=seasonal_period, extrapolate_trend="period")
     rolling = np.convolve(array, np.ones(7) / 7, mode="valid")
     return {
         "adf_stat": float(adf.statistic), "adf_pvalue": float(adf.pvalue),
@@ -42,7 +42,7 @@ def series_diagnostics(values: np.ndarray, lags: int = 20) -> dict[str, object]:
         "acf": acf(array, nlags=usable, fft=True).tolist(),
         "pacf": pacf(array, nlags=usable).tolist(),
         "rolling_mean_7_latest": float(rolling[-1]),
-        "decomposition_period": 7,
+        "decomposition_period": seasonal_period,
         "trend_latest": float(decomposition.trend[-1]),
         "seasonal_latest": float(decomposition.seasonal[-1]),
         "residual_std": float(np.nanstd(decomposition.resid)),

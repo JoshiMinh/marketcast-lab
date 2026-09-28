@@ -36,7 +36,7 @@ def default_registry() -> ModelRegistry:
     registry.register("seasonal_naive", lambda p: SeasonalNaiveBaseline(int(p.get("period", 7))))
     for name in ("exponential_smoothing", "holt_winters", "arima", "sarima"):
         registry.register(name, lambda p, kind=name: StatisticalModel(kind=kind, **p))
-    for name in ("ridge", "random_forest", "xgboost"):
+    for name in ("ridge", "lasso", "random_forest", "xgboost"):
         registry.register(name, lambda p, kind=name: LagRegressor(kind=kind, **p))
     for name in ("rnn", "lstm", "gru"):
         registry.register(name, lambda p, kind=name: TorchSequenceModel(kind=kind, **p))

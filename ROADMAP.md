@@ -20,10 +20,12 @@ Agents must inspect the current repository before editing, preserve useful legac
 
 - [x] Phase 1 — Establish a trustworthy single-asset foundation.
 - [x] Phase 2 — Build evaluation and all required model families.
-- [ ] Phase 3 — Generalize to four markets and produce defensible results.
-- [ ] Phase 4 — Deliver the dashboard, report, and reproducibility package.
+- [x] Phase 3 — Generalize to four markets and produce defensible results.
+- [x] Phase 4 — Deliver the dashboard, report, and reproducibility package.
 
 Phase 1 and Phase 2 were verified with the automated test suite and reproducible BTC experiment configurations. Generated run directories remain local and are excluded from version control; configurations, code, tests, and reporting logic are committed.
+
+Phase 3 provides cached four-market providers, calendar-aware canonical normalization, per-asset quality and EDA, 14-model experiments across three horizons, cross-market reports, and a saved-prediction audit. See `PHASE3.md` and `artifacts/phase3/run_index.json` for the local evidence.
 
 ## Fixed project contract
 

@@ -15,6 +15,7 @@ def tune_on_validation_folds(
     registry: ModelRegistry,
     seed: int,
     base_parameters: dict[str, dict[str, object]],
+    target_column: str = "close",
 ) -> tuple[dict[str, dict[str, object]], pd.DataFrame]:
     selected = {name: dict(params) for name, params in base_parameters.items()}
     rows = []
@@ -24,6 +25,7 @@ def tune_on_validation_folds(
             result = evaluate_models(
                 frame, folds=folds, models=(model_name,), horizons=horizons,
                 registry=registry, parameters={model_name: params}, seed=seed,
+                target_column=target_column,
             )
             score = float(result.metrics["rmse"].mean()) if not result.metrics.empty else float("inf")
             rows.append({

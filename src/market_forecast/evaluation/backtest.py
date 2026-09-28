@@ -23,7 +23,7 @@ class BacktestResult:
 
 def _params_for(model_name: str, parameters: dict[str, dict[str, object]], seed: int) -> dict[str, object]:
     params = dict(parameters.get(model_name, {}))
-    if model_name in {"ridge", "random_forest", "xgboost", "rnn", "lstm", "gru"}:
+    if model_name in {"ridge", "lasso", "random_forest", "xgboost", "rnn", "lstm", "gru"}:
         params.setdefault("seed", seed)
     return params
 
@@ -64,7 +64,10 @@ def evaluate_models(
     parameters: dict[str, dict[str, object]] | None = None,
     strategy: str = "recursive",
     seed: int = 42,
+    target_column: str = "close",
 ) -> BacktestResult:
+    if frame["asset_id"].nunique() != 1:
+        raise ValueError("Backtest input must contain exactly one selected asset")
     if strategy not in {"recursive", "one_step_observed"}:
         raise ValueError("strategy must be recursive or one_step_observed")
     parameters = parameters or {}
@@ -75,15 +78,15 @@ def evaluate_models(
         for model_name in models:
             try:
                 predicted, fit_seconds, inference_seconds, model = _forecast(
-                    model_name=model_name, train_values=train["close"].to_numpy(),
-                    test_values=test["close"].to_numpy(), horizon=max(horizons),
+                    model_name=model_name, train_values=train[target_column].to_numpy(),
+                    test_values=test[target_column].to_numpy(), horizon=max(horizons),
                     registry=registry, params=_params_for(model_name, parameters, seed), strategy=strategy,
                 )
                 for horizon in horizons:
-                    actual = test["close"].to_numpy()[:horizon]
+                    actual = test[target_column].to_numpy()[:horizon]
                     forecast = predicted[:horizon]
                     scores = regression_metrics(
-                        actual, forecast, training=train["close"].to_numpy(), seasonal_period=1,
+                        actual, forecast, training=train[target_column].to_numpy(), seasonal_period=1,
                     )
                     interval_coverage = np.nan
                     if strategy == "recursive" and hasattr(model, "predict_interval"):
@@ -106,7 +109,7 @@ def evaluate_models(
                             "strategy": strategy, "step": step, "timestamp": timestamp,
                             "actual": truth, "prediction": estimate,
                         })
-                residuals = test["close"].to_numpy()[:max(horizons)] - predicted
+                residuals = test[target_column].to_numpy()[:max(horizons)] - predicted
                 diagnostics.append({"model": model_name, "fold": fold.fold, **model.diagnostics(), **residual_diagnostics(residuals)})
             except Exception as exc:
                 failures.append({"model": model_name, "fold": fold.fold, "error_type": type(exc).__name__, "message": str(exc)})
@@ -123,12 +126,13 @@ def evaluate_final_holdout(
     parameters: dict[str, dict[str, object]] | None = None,
     strategy: str = "recursive",
     seed: int = 42,
+    target_column: str = "close",
 ) -> BacktestResult:
     split = len(frame) - final_test_size
     fold = BacktestFold(0, tuple(range(split)), tuple(range(split, len(frame))))
     result = evaluate_models(
         frame, folds=(fold,), models=models, horizons=horizons, registry=registry,
-        parameters=parameters, strategy=strategy, seed=seed,
+        parameters=parameters, strategy=strategy, seed=seed, target_column=target_column,
     )
     if not result.predictions.empty:
         result.predictions["partition"] = "final_test"
