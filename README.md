@@ -62,9 +62,9 @@ The expanded catalog also uses bundled ETH, Yahoo QQQ, ECB EUR/JPY, EIA Henry Hu
 - `src/market_forecast/` contains providers, models, evaluation, runs, artifact readers, and publication code. `src/tests/` contains the tests; `src/streamlit.py` is the artifact-driven dashboard.
 - `configs/` contains experiment settings and asset catalogs. `data/` contains the bundled BTC series and ignored provider caches.
 - `assets/phase3/` contains the committed comparison snapshot and figures; `assets/phase4/` contains the saved presentation, figures, and scenario output. Full run directories under `assets/runs/` are ignored and must be regenerated to audit the snapshot interactively.
-- `assets/legacy/adam/` holds outputs from the retired TensorFlow/Prophet trainer. They are excluded from the audited study. The root notebook is historical, not a supported training entry point.
+- `assets/legacy/adam/` holds outputs from the retired TensorFlow/Prophet trainer. They are excluded from the audited study.
 - `images/` holds the screenshot and fallback comparison figures: [relative RMSE](images/relative_rmse.png) and [fold variability](images/fold_variability.png).
 
 For a demo, audit the saved predictions, build deliverables, open `assets/phase4/presentation.pptx`, and inspect the dashboard's Experiment History, Backtest Results, Model Comparison, and Future Forecast pages. On a clean clone the committed comparison and slides are available, but full runs may be absent; the dashboard explains how to generate them. The fallback figures are saved examples, not newly reproduced results.
 
-The supported CLI is `main.py` or the installed `marketcast` command. The former interactive `train` and `ui` commands were retired. Prediction files fall back to CSV when Parquet support is unavailable. GitHub Actions are disabled; reproduction uses the local commands above.
+The supported CLI is `main.py` or the installed `marketcast` command. Running `python main.py` or `python main.py --help` displays the command menu. The former interactive `train` and `ui` commands were retired. Prediction files fall back to CSV when Parquet support is unavailable. GitHub Actions are disabled; reproduction uses the local commands above.
