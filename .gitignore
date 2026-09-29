@@ -53,7 +53,8 @@ temp/
 
 # Editor and operating-system files
 .idea/
-.vscode/
+.vscode/*
+!.vscode/launch.json
 *.swp
 *.swo
 .DS_Store

@@ -1,8 +1,10 @@
 # MarketCast Lab
 
-MarketCast Lab compares daily forecasts for BTC/USD, SPY, EUR/USD, and WTI Cushing spot oil. It evaluates 14 model families at 1, 5, and 20 observed-session horizons with three expanding validation folds and a locked holdout. The dashboard, report, and slides read saved runs; they do not train while rendering. This course study is educational, not financial advice.
+MarketCast Lab compares daily forecasts for BTC/USD, SPY, EUR/USD, and WTI Cushing spot oil. It evaluates 14 model families at 1, 5, and 20 observed-session horizons with three expanding validation folds and a locked holdout. The dashboard reads saved comparison data and, when available, full experiment runs; it does not train while rendering. This course study is educational, not financial advice.
 
-![MarketCast Lab preview](images/screenshots.png)
+![Saved validation comparison across markets](assets/phase3/relative_rmse.png)
+
+The Streamlit dashboard has three compact views: **Overview** compares models for one asset and horizon, **Forecasts** separates historical backtests from saved future scenarios, and **Data & Runs** contains source history and experiment details. Choose the asset and horizon in the sidebar. Charts support hover inspection and the detailed records stay collapsed until needed. The Overview works from the committed comparison snapshot even when full run files are absent.
 
 ## Setup and commands
 
@@ -24,6 +26,8 @@ python main.py build-deliverables
 python main.py build-future-scenarios
 python -m streamlit run src/streamlit.py
 ```
+
+In VS Code, open this repository folder, choose **MarketCast Lab (Streamlit)** in Run and Debug, then press **F5**. The configuration uses `.venv` and starts Streamlit as a module. The editor's **Run Python File** button runs `src/streamlit.py` directly and does not start a Streamlit server.
 
 The first study run downloads SPY from Yahoo Finance, EUR/USD from the ECB, and WTI spot from the EIA; provider responses are cached in ignored `data/raw/`. The bundled CSV supplies BTC. The audit recomputes MAE and RMSE from saved predictions. The original four-market run produced 672 metric rows (14 models x 3 horizons x 4 evaluation windows x 4 assets), with no model failures and one FX convergence warning. Source revisions can change a new run.
 
@@ -63,8 +67,8 @@ The expanded catalog also uses bundled ETH, Yahoo QQQ, ECB EUR/JPY, EIA Henry Hu
 - `configs/` contains experiment settings and asset catalogs. `data/` contains the bundled BTC series and ignored provider caches.
 - `assets/phase3/` contains the committed comparison snapshot and figures; `assets/phase4/` contains the saved presentation, figures, and scenario output. Full run directories under `assets/runs/` are ignored and must be regenerated to audit the snapshot interactively.
 - `assets/legacy/adam/` holds outputs from the retired TensorFlow/Prophet trainer. They are excluded from the audited study.
-- `images/` holds the screenshot and fallback comparison figures: [relative RMSE](images/relative_rmse.png) and [fold variability](images/fold_variability.png).
+- `images/` holds additional saved comparison figures: [relative RMSE](images/relative_rmse.png) and [fold variability](images/fold_variability.png).
 
-For a demo, audit the saved predictions, build deliverables, open `assets/phase4/presentation.pptx`, and inspect the dashboard's Experiment History, Backtest Results, Model Comparison, and Future Forecast pages. On a clean clone the committed comparison and slides are available, but full runs may be absent; the dashboard explains how to generate them. The fallback figures are saved examples, not newly reproduced results.
+For a demo, audit the saved predictions, build deliverables, open `assets/phase4/presentation.pptx`, and inspect the dashboard's Overview, Forecasts, and Data & Runs views. On a clean clone the committed comparison and slides are available, but full runs may be absent; the dashboard explains how to generate them. The saved figures are examples, not newly reproduced results.
 
 The supported CLI is `main.py` or the installed `marketcast` command. Running `python main.py` or `python main.py --help` displays the command menu. The former interactive `train` and `ui` commands were retired. Prediction files fall back to CSV when Parquet support is unavailable. GitHub Actions are disabled; reproduction uses the local commands above.
