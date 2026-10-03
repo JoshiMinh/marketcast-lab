@@ -27,22 +27,27 @@ dist/
 .ipynb_checkpoints/
 
 # Provider snapshots, normalized data, and generated experiment runs
-# Keep the bundled BTC CSV and curated phase3/phase4 report snapshots tracked.
+# Keep the bundled BTC CSV tracked; generated studies and reports stay local.
 data/raw/
 data/interim/
 data/processed/
 data/fixtures/generated/
-assets/runs/
-assets/offline-fixture/
-assets/offline-phase4/
-assets/offline-extended/
-assets/offline-extended-report/
+
+# Keep only the dashboard input snapshots; full runs and reports are generated.
+assets/*
+!assets/phase3/
+!assets/phase4/
+assets/phase3/*
+assets/phase4/*
+!assets/phase3/comparison.csv
+!assets/phase3/recommendations.csv
+!assets/phase4/future_forecasts.csv
+!assets/phase4/future_manifest.json
 
 # Model checkpoints and local scratch output
 *.ckpt
 *.joblib
 *.keras
-!assets/legacy/adam/*.keras
 *.pkl
 *.pt
 *.pth
@@ -54,8 +59,7 @@ temp/
 
 # Editor and operating-system files
 .idea/
-.vscode/*
-!.vscode/launch.json
+.vscode/
 *.swp
 *.swo
 .DS_Store

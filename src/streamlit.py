@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from urllib.parse import quote
 import os
 from pathlib import Path
 import sys
@@ -20,16 +21,18 @@ import streamlit as st
 from market_forecast.dashboard.artifacts import ArtifactCatalog, RunRecord, load_catalog
 
 st.set_page_config(page_title="MarketCast Lab", page_icon=str(PROJECT_ROOT / ".streamlit" / "favicon.svg"),
-                   layout="wide", initial_sidebar_state="expanded")
+                   layout="wide", initial_sidebar_state="auto")
 
 PAGES = ("Overview", "Forecasts", "Data & Runs")
 ACCENT = "#55c6b3"
-MUTED = "#8291a3"
+MUTED = "#8193a8"
 ICON_PATHS = {
     "activity": '<path d="M3 12h5l3-7 4 14 3-7h3"/>',
     "overview": '<path d="M4 20V11h4v9M10 20V5h4v15M16 20v-7h4v7M3 20h18"/>',
     "forecast": '<path d="M3 17l6-6 4 3 8-8M16 6h5v5"/>',
     "data": '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',
+    "check": '<path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="10"/>',
+    "calendar": '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>',
     "lock": '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 15v2"/>',
 }
 
@@ -108,14 +111,14 @@ def _chart(chart: alt.Chart, height: int) -> alt.Chart:
 
 
 def _icon(name: str) -> str:
-    return (f'<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" '
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" '
             f'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
             f'stroke-linejoin="round">{ICON_PATHS[name]}</svg>')
 
 
 def _page_heading(title: str, context: str, icon: str) -> None:
     st.markdown(f'<div class="page-heading">{_icon(icon)}<h1>{title}</h1></div>', unsafe_allow_html=True)
-    st.caption(context)
+    st.markdown(f'<div class="page-context">{context}<span class="study-badge">{_icon("lock")} Saved study</span></div>', unsafe_allow_html=True)
 
 
 def _section_heading(title: str, icon: str) -> None:
@@ -124,21 +127,51 @@ def _section_heading(title: str, icon: str) -> None:
 
 def _style() -> None:
     st.markdown("""<style>
-    .block-container {max-width: 1280px; padding-top: 1.35rem; padding-bottom: 2rem;}
-    h1 {font-size: 1.8rem !important; letter-spacing: -.025em; margin-bottom: .15rem !important;}
-    h2 {font-size: 1.13rem !important; margin-top: .8rem !important;}
-    .page-heading, .section-heading, .brand-heading {display: flex; align-items: center; gap: .65rem;}
-    .page-heading {margin: .25rem 0 .15rem;}
+    :root {--mc-accent: #55c6b3; --mc-muted: #a4b2c3; --mc-border: #293444; --mc-surface: #121b27;}
+    .block-container {max-width: 1600px; padding: 4.5rem 2rem 2rem;}
+    h1 {font-size: 1.85rem !important; font-weight: 650 !important; letter-spacing: -.035em;}
+    h2 {font-size: 1rem !important; font-weight: 600 !important;}
+    .page-heading, .section-heading, .brand-heading {display: flex; align-items: center; gap: .75rem;}
     .page-heading h1, .section-heading h2 {margin: 0 !important; padding: 0 !important;}
-    .page-heading svg {width: 1.65rem; height: 1.65rem; color: #55c6b3; flex: none;}
-    .section-heading {margin: .85rem 0 .25rem;}
-    .section-heading svg {width: 1.1rem; height: 1.1rem; color: #8291a3; flex: none;}
-    .brand-heading {font-weight: 650; font-size: 1.05rem;}
-    .brand-heading svg {width: 1.25rem; height: 1.25rem; color: #55c6b3; flex: none;}
-    [data-testid="stMetric"] {background: #182330; border: 1px solid #2a3948; border-radius: 9px; padding: .7rem .85rem;}
-    [data-testid="stMetricLabel"] {font-size: .78rem;}
-    [data-testid="stMetricValue"] {font-size: 1.25rem;}
+    .page-heading svg {width: 1.75rem; height: 1.75rem; color: var(--mc-accent); flex: none;}
+    .page-context {display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; color: var(--mc-muted); font-size: .85rem; margin: .5rem 0 1.5rem;}
+    .study-badge {display: inline-flex; align-items: center; gap: .4rem; border-left: 1px solid var(--mc-border); padding-left: 1rem; font-size: .75rem;}
+    .study-badge svg {width: .85rem; height: .85rem;}
+    .section-heading {margin: .25rem 0 .5rem;}
+    .section-heading svg {width: 1.1rem; height: 1.1rem; color: var(--mc-accent); flex: none;}
+    .brand-heading {font-size: 1.05rem; font-weight: 650; letter-spacing: -.025em;}
+    .brand-heading svg {width: 1.5rem; height: 1.5rem; color: var(--mc-accent); flex: none;}
+    [data-testid="stSidebar"][aria-expanded="true"] {min-width: 248px !important; max-width: 248px !important; border-right: 1px solid var(--mc-border);}
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {padding-top: 1.5rem;}
+    [data-testid="stSidebar"] hr {margin: 1.25rem 0; border-color: var(--mc-border);}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-testid="stRadioOption"] {width: 100%; padding: .5rem .75rem; border-radius: .25rem; margin: .15rem 0;}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-testid="stRadioOption"][data-selected="true"] {background: #1b3035;}
+    [data-testid="stSidebar"] [data-testid="stRadio"] label[data-testid="stRadioOption"] p {display: flex; align-items: center; gap: .6rem; font-size: .85rem;}
+    [data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child {display: none;}
+    [data-testid="stRadioOption"][data-focus-visible="true"] {outline: 2px solid var(--mc-accent); outline-offset: 2px;}
+    [data-testid="stMetric"] {background: var(--mc-surface); border: 1px solid var(--mc-border); border-radius: .35rem; padding: 1rem;}
+    [data-testid="stMetricLabel"] p {font-size: .8rem !important; color: var(--mc-muted); white-space: normal !important;}
+    [data-testid="stMetricValue"] {font-size: 1.6rem; font-weight: 550; letter-spacing: -.025em;}
+    [data-testid="stVerticalBlockBorderWrapper"] {border-color: var(--mc-border) !important; border-radius: .5rem !important;}
+    [data-testid="stCaptionContainer"] {color: var(--mc-muted);}
+    [data-testid="stExpander"] {border-color: var(--mc-border); border-radius: .35rem;}
+    [data-testid="stExpander"] summary {font-size: .85rem;}
+    .sidebar-note {color: var(--mc-muted); font-size: .75rem; line-height: 1.7;}
+    .sidebar-note svg {width: .85rem; height: .85rem; vertical-align: -.1rem; margin-right: .35rem;}
+    button:focus-visible, input:focus-visible {outline: 2px solid var(--mc-accent) !important; outline-offset: 3px;}
+    @media (max-width: 900px) {.block-container {padding-left: 1rem; padding-right: 1rem;} [data-testid="stHorizontalBlock"] {flex-wrap: wrap;} [data-testid="stColumn"] {min-width: min(100%, 220px); flex: 1 1 220px;}}
+    @media (max-width: 1000px) {.st-key-overview-panels [data-testid="stColumn"] {min-width: 100%; flex: 1 1 100%;}}
+    @media (max-width: 480px) {.block-container {padding: 4rem .75rem 1rem;} h1 {font-size: 1.5rem !important;} .page-context {gap: .5rem;} [data-testid="stColumn"] {min-width: 100%;} .study-badge {border: 0; padding-left: 0;}}
     </style>""", unsafe_allow_html=True)
+    navigation_css = []
+    for index, name in enumerate(("overview", "forecast", "data"), 1):
+        svg = _icon(name).replace('currentColor', '#a4b2c3')
+        uri = "data:image/svg+xml," + quote(svg)
+        navigation_css.append(
+            f'[data-testid="stSidebar"] [data-testid="stRadio"] label[data-testid="stRadioOption"]:has(input[value="{index - 1}"]) p::before '
+            f'{{content: ""; width: 1rem; height: 1rem; flex: none; background: url("{uri}") center/contain no-repeat;}}'
+        )
+    st.markdown("<style>" + "".join(navigation_css) + "</style>", unsafe_allow_html=True)
 
 
 def _overview(root: Path, summary: pd.DataFrame, asset: str, horizon: int) -> None:
@@ -159,25 +192,28 @@ def _overview(root: Path, summary: pd.DataFrame, asset: str, horizon: int) -> No
     c.metric("Versus last value", f"{improvement:+.1f}%" if pd.notna(improvement) else "Unavailable",
              help="Positive means lower validation RMSE than the last-value baseline.")
 
-    _section_heading("Validation RMSE by model", "activity")
-    plot = rows.assign(model_label=rows.model.map(_model_label), recommended=rows.model.eq(selected.model))
-    chart = alt.Chart(plot).mark_bar(cornerRadiusEnd=3).encode(
-        x=alt.X("rmse_mean:Q", title="Mean RMSE across validation folds", scale=alt.Scale(zero=True)),
-        y=alt.Y("model_label:N", title=None, sort=alt.SortField(field="rmse_mean", order="ascending")),
-        color=alt.condition("datum.recommended", alt.value(ACCENT), alt.value(MUTED)),
-        tooltip=[alt.Tooltip("model_label:N", title="Model"),
-                 alt.Tooltip("rmse_mean:Q", title="Validation RMSE", format=".4g"),
-                 alt.Tooltip("rmse_std:Q", title="Fold spread", format=".4g"),
-                 alt.Tooltip("fit_seconds_mean:Q", title="Mean fit time (s)", format=".3g")])
-    st.altair_chart(_chart(chart, min(440, max(270, len(rows) * 29))), width="stretch")
-    st.caption("Lower is better. The highlighted model follows the saved validation-only recommendation rule.")
-
-    _section_heading("Locked holdout", "lock")
-    a, b, c = st.columns(3)
-    a.metric("Recommended model RMSE", _number(float(selected.final_test_rmse)))
-    b.metric("Last-value RMSE", _number(float(baseline.iloc[0].final_test_rmse)) if not baseline.empty else "Unavailable")
-    c.metric("Validation fold spread", _number(float(selected.rmse_std)))
-    st.caption("Holdout scores check the selected model; they do not choose it. Raw RMSE is comparable only within an asset and horizon.")
+    st.write("")
+    with st.container(key="overview-panels"):
+        comparison_panel, holdout_panel = st.columns([3, 1.15], gap="large")
+        with comparison_panel, st.container(border=True):
+            _section_heading("Validation RMSE by model", "activity")
+            plot = rows.assign(model_label=rows.model.map(_model_label), recommended=rows.model.eq(selected.model))
+            chart = alt.Chart(plot).mark_bar(cornerRadiusEnd=3).encode(
+                x=alt.X("rmse_mean:Q", title="Mean RMSE across validation folds", scale=alt.Scale(zero=True)),
+                y=alt.Y("model_label:N", title=None, sort=alt.SortField(field="rmse_mean", order="ascending")),
+                color=alt.condition("datum.recommended", alt.value(ACCENT), alt.value(MUTED)),
+                tooltip=[alt.Tooltip("model_label:N", title="Model"),
+                         alt.Tooltip("rmse_mean:Q", title="Validation RMSE", format=".4g"),
+                         alt.Tooltip("rmse_std:Q", title="Fold spread", format=".4g"),
+                         alt.Tooltip("fit_seconds_mean:Q", title="Mean fit time (s)", format=".3g")])
+            st.altair_chart(_chart(chart, min(400, max(260, len(rows) * 26))), width="stretch")
+            st.caption("Lower is better. The highlighted model follows the saved validation-only recommendation rule.")
+        with holdout_panel, st.container(border=True):
+            _section_heading("Locked holdout", "lock")
+            st.metric("Recommended model RMSE", _number(float(selected.final_test_rmse)))
+            st.metric("Last-value RMSE", _number(float(baseline.iloc[0].final_test_rmse)) if not baseline.empty else "Unavailable")
+            st.metric("Validation fold spread", _number(float(selected.rmse_std)))
+            st.caption("Holdout scores check the selected model; they do not choose it. Raw RMSE is comparable only within an asset and horizon.")
     with st.expander("All model scores and selection details"):
         st.dataframe(rows[["model", "rmse_mean", "rmse_std", "mae_mean", "mase_mean", "final_test_rmse", "fit_seconds_mean"]],
                      width="stretch", hide_index=True)
@@ -334,14 +370,14 @@ def main() -> None:
     with st.sidebar:
         st.markdown(f'<div class="brand-heading">{_icon("activity")}<span>MarketCast Lab</span></div>',
                     unsafe_allow_html=True)
-        st.caption("Saved forecasting study")
+        st.caption("FORECAST RESEARCH")
         page = st.radio("View", PAGES)
         st.divider()
         asset = st.selectbox("Asset", sorted(summary.asset_id.unique()), format_func=_asset_label)
         horizons = sorted(int(value) for value in summary.loc[summary.asset_id == asset, "horizon"].unique())
         horizon = st.selectbox("Horizon · observed sessions", horizons, index=horizons.index(5) if 5 in horizons else 0)
         st.divider()
-        st.caption("Educational analysis · not financial advice")
+        st.markdown(f'<div class="sidebar-note">{_icon("calendar")} Study through 14 Oct 2025<br>{_icon("lock")} Validation before holdout<br><br>Educational analysis.<br>Not financial advice.</div>', unsafe_allow_html=True)
     catalog = _load_catalog(root) if page != "Overview" else None
     if (root / "SYNTHETIC_FIXTURE.txt").exists():
         st.warning("Synthetic offline fixture. Values are demonstration data, not market evidence.")
