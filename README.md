@@ -1,5 +1,7 @@
 # MarketCast Lab
 
+Prepared for long-term dormancy on **2026-10-03**. This project is not actively maintained. The saved study ends on **2025-10-14**. GitHub remains writable; see [ARCHIVAL.md](ARCHIVAL.md) for the preservation checkpoint, validation, and recovery instructions.
+
 MarketCast Lab compares daily forecasts for BTC/USD, SPY, EUR/USD, and WTI Cushing spot oil. It evaluates 14 model families at 1, 5, and 20 observed-session horizons with three expanding validation folds and a locked holdout. The dashboard reads saved comparison data and, when available, full experiment runs; it does not train while rendering. This course study is educational, not financial advice.
 
 ![Saved validation comparison across markets](assets/phase3/relative_rmse.png)

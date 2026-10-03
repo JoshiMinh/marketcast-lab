@@ -1,5 +1,6 @@
 # Local environments and credentials
 .venv/
+.venv-restore/
 venv/
 env/
 .env
@@ -60,3 +61,6 @@ temp/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Private local preservation inventories (no research data is uploaded)
+.preservation/
